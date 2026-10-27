@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="description" content="Shopwise searches published Singapore shopping listings and compares sourced prices."/>
+<meta name="theme-color" content="#116d5b"/>
+<title>Shopwise — compare actual listings</title><link rel="stylesheet" href="style.css"/></head>
+<body><div class="app">
+<aside class="navigation" id="navigation" aria-label="App navigation"></aside>
+<main class="main">
+<header class="topbar"><div><div class="eyebrow">✦ SHOP SMARTER, SAVE MORE</div><h1 class="page-title" id="page-title">Your shopping dashboard</h1><p class="page-sub" id="page-sub">Compare Singapore shopping listings, save prices, shop at the retailer.</p></div>
+<div class="top-actions"><form class="top-search" id="top-search" role="search"><span aria-hidden="true">⌕</span><label class="sr-only" for="top-query">Search products</label><input type="search" id="top-query" placeholder="Search oats, milk, earbuds..." maxlength="90"/><button class="sr-only" type="submit">Search</button></form><div class="avatar" title="Shopping list saved to this device">🛍️</div></div></header>
+<div class="demo-banner"><span style="font-size:18px">ⓘ</span><span><strong>Real listing search, not fictional prices.</strong> Results come from Google Shopping via SerpApi when connected. Not every store/product is indexed. Item prices may differ at checkout; delivery, vouchers and stock are not verified.</span><span class="banner-status" id="shopping-banner">Checking connection</span></div>
+<section class="hero"><div class="hero-copy"><span class="hero-overline">YOUR PERSONAL SHOPPING CO-PILOT</span><h2>Find the better deal.<br/>Keep more in your pocket.</h2><p>Search published prices, compare sources, and keep a shortlist. Complete purchases safely on each retailer's own website.</p></div><div class="hero-shape" aria-hidden="true">🛍️</div></section>
+<div class="workspace"><div id="promos" class="promo-column"></div><div id="center" class="center-column" aria-live="polite"></div><div id="right" class="right-column"></div></div>
+</main></div><div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="app.js" defer></script></body></html>
