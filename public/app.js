@@ -7,7 +7,7 @@ const previously=load();
 const RETAILERS=[
  {name:'FairPrice123',link:q=>'https://www.fairprice.com.sg/search?query='+encodeURIComponent(q),color:'#137947'},
  {name:'Shopee69',link:q=>'https://shopee.sg/search?keyword='+encodeURIComponent(q),color:'#ee7745'},
- {name:'Lazada',link:q=>'https://www.lazada.sg/catalog/?q='+encodeURIComponent(q),color:'#7058a5'},
+ {name:'Lazada456',link:q=>'https://www.lazada.sg/catalog/?q='+encodeURIComponent(q),color:'#7058a5'},
  {name:'Amazon SG',link:q=>'https://www.amazon.sg/s?k='+encodeURIComponent(q),color:'#e4a837'},
  {name:'Cold Storage',link:q=>'https://coldstorage.com.sg/',color:'#c84946'},
  {name:'RedMart',link:q=>'https://www.lazada.sg/catalog/?q='+encodeURIComponent(q),color:'#ce4545'},
