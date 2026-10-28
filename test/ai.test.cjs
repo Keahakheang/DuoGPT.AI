@@ -72,7 +72,7 @@ test('SerpApi powers source-backed chat answers when Hugging Face is not configu
   };
   const reply=await generateReply({message:'What is Singapore?',history:[],context:{}},{SERPAPI_KEY:'serpapi-test',HF_TOKEN:'hf-test'},fakeFetch);
   assert.match(reply,/^Hello! Singapore is a sovereign city-state in Southeast Asia\./);
-  assert.match(reply,/Singapore overview/);
+  assert.match(reply,/\[Singapore overview\]\(https:\/\/example\.com\/singapore\)/);
   assert.equal(calls[0].searchParams.get('engine'),'google');
   assert.equal(calls[0].searchParams.get('gl'),'sg');
   assert.equal(calls[0].searchParams.get('location'),'Singapore');
