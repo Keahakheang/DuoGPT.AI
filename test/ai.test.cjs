@@ -29,25 +29,25 @@ test('Hugging Face request supports open-ended conversation with real shopping c
   assert.equal(outgoing.stream, false);
 });
 test('Missing token returns a friendly error', async () => {
-  await assert.rejects(generateReply({message: 'Hello'}, {}, ()=>{}), /HF_TOKEN/);
+  await assert.rejects(generateReply({message: 'What is Singapore?'}, {}, ()=>{}), /SERPAPI_KEY or HF_TOKEN/);
 });
 test('No credits / authorization errors are friendly and do not expose upstream body', async () => {
-  await assert.rejects(generateReply({message:'Hi'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:402})), /credits may be exhausted/);
-  await assert.rejects(generateReply({message:'Hi'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:403})), /token is not authorized/);
+  await assert.rejects(generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:402})), /credits may be exhausted/);
+  await assert.rejects(generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:403})), /token is not authorized/);
 });
 test('Rate limiting and bad API tokens return useful errors', async () => {
-  await assert.rejects(generateReply({message:'Hi'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:429})), /limit reached/);
-  await assert.rejects(generateReply({message:'Hi'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:401})), /token was rejected/);
+  await assert.rejects(generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:429})), /limit reached/);
+  await assert.rejects(generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:401})), /token was rejected/);
 });
 test('Different model can be configured without changing the HTML', async () => {
   const fakeFetch = async (_url,opts) => {
     assert.equal(JSON.parse(opts.body).model,'openai/gpt-oss-20b:cheapest');
     return {ok:true,json:async()=>({choices:[{message:{content:'Hello!'}}]})};
   };
-  assert.equal(await generateReply({message:'Hi'}, {HF_TOKEN:'hf-x',HF_MODEL:'openai/gpt-oss-20b:cheapest'},fakeFetch),'Hello!');
+  assert.equal(await generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-x',HF_MODEL:'openai/gpt-oss-20b:cheapest'},fakeFetch),'Hello!');
 });
 test('AI replies always start with Hello! without duplicating an existing greeting', async () => {
-  const replyWith = content => generateReply({message:'Hi'}, {HF_TOKEN:'hf-test'}, async () => ({
+  const replyWith = content => generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-test'}, async () => ({
     ok:true,json:async()=>({choices:[{message:{content}}]})
   }));
   assert.equal(await replyWith('How can I help?'),'Hello! How can I help?');
@@ -87,4 +87,29 @@ test('SerpApi chat explains when it can only provide search snippets', async () 
   assert.match(reply,/^Hello! I couldn't find a Google AI Overview/);
   assert.match(reply,/A sourced result summary/);
   assert.match(reply,/https:\/\/example\.com\/result/);
+});
+test('greetings and everyday chat get natural replies without searching', async () => {
+  const unexpectedFetch=async()=>{throw new Error('Casual conversation should not trigger a search')};
+  const env={SERPAPI_KEY:'serpapi-test'};
+  assert.equal(await generateReply({message:'Hello',history:[],context:{}},env,unexpectedFetch),'Hello! How can I help you today? You can ask me a general question or ask about the shopping results.');
+  assert.match(await generateReply({message:'Hi, how are you?',history:[],context:{}},env,unexpectedFetch),/^Hello! I'm doing well/);
+  assert.match(await generateReply({message:'How are you?',history:[],context:{}},env,unexpectedFetch),/^Hello! I'm doing well/);
+  assert.match(await generateReply({message:'Thanks!',history:[],context:{}},env,unexpectedFetch),/^Hello! You're welcome/);
+  assert.match(await generateReply({message:'What can you do?',history:[],context:{}},env,unexpectedFetch),/answer general questions/);
+  assert.match(await generateReply({message:'Hi',history:[],context:{}},{},unexpectedFetch),/^Hello! How can I help/);
+});
+test('a greeting attached to a real question still searches for an answer', async () => {
+  let fetched=false;
+  const fakeFetch=async url=>{
+    fetched=true;
+    const requestUrl=new URL(url);
+    assert.match(requestUrl.searchParams.get('q'),/Hi, what is Singapore\?/i);
+    return {ok:true,status:200,json:async()=>({
+      answer_box:{answer:'Singapore is a city-state in Southeast Asia.',link:'https://example.com/singapore'},
+      organic_results:[]
+    })};
+  };
+  const reply=await generateReply({message:'Hi, what is Singapore?',history:[],context:{}},{SERPAPI_KEY:'serpapi-test'},fakeFetch);
+  assert.equal(fetched,true);
+  assert.match(reply,/Singapore is a city-state/);
 });
