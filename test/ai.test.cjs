@@ -21,7 +21,7 @@ test('Hugging Face request supports open-ended conversation with real shopping c
     return {ok: true, json: async () => ({choices: [{message: {content: '7'}}]})};
   };
   const result = await generateReply({message:'What is 3 + 4?',history:[{role:'user',text:'Help with math'}],context:{selectedProduct:'oats',offers:[{store:'Fairprice1',itemPriceSGD:5.95,title:'Rolled oats 1kg',sourceUrl:'https://example.com/oats'}],isSearchData:true}},{HF_TOKEN:'hf-test-only'},fakeFetch);
-  assert.equal(result, '7');
+  assert.equal(result, 'Hello! 7');
   assert.equal(outgoing.model, DEFAULT_MODEL);
   assert.equal(outgoing.messages.at(-1).content, 'What is 3 + 4?');
   assert.equal(outgoing.messages[2].content, 'Help with math');
@@ -45,4 +45,11 @@ test('Different model can be configured without changing the HTML', async () => 
     return {ok:true,json:async()=>({choices:[{message:{content:'Hello!'}}]})};
   };
   assert.equal(await generateReply({message:'Hi'}, {HF_TOKEN:'hf-x',HF_MODEL:'openai/gpt-oss-20b:cheapest'},fakeFetch),'Hello!');
+});
+test('AI replies always start with Hello! without duplicating an existing greeting', async () => {
+  const replyWith = content => generateReply({message:'Hi'}, {HF_TOKEN:'hf-test'}, async () => ({
+    ok:true,json:async()=>({choices:[{message:{content}}]})
+  }));
+  assert.equal(await replyWith('How can I help?'),'Hello! How can I help?');
+  assert.equal(await replyWith('Hello! How can I help?'),'Hello! How can I help?');
 });
