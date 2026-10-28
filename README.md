@@ -2,8 +2,6 @@
 
 **What is real:** When `SERPAPI_KEY` is set, Search requests Singapore-localized Google Shopping listings through SerpApi. Product titles, listed prices, merchants, source links, old prices (if present) and retrieval timestamps come from the response. The app does not contain fictional product offers or fake vouchers.
 
-Search requests use Google's Singapore domain and location, and results without an explicitly Singapore-dollar price are excluded. This does not verify seller location, stock, or delivery availability; confirm those details with the retailer.
-
 **What this does not claim:** Shopwise does not have official account integrations with Fairprice1, Shopee, Lazada, Amazon SG, Cold Storage or RedMart. Google Shopping indexing is incomplete and results may mix pack sizes. Listed item prices can be stale; no guaranteed final delivery, taxes, checkout price, stock, coupon eligibility, or accurate seller matching. Search shortcuts link out to each real store. Saved shopping list is *not* a retailer checkout/cart.
 
 ## Publish on your existing Netlify project
