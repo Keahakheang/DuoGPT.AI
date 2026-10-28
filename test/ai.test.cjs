@@ -53,3 +53,38 @@ test('AI replies always start with Hello! without duplicating an existing greeti
   assert.equal(await replyWith('How can I help?'),'Hello! How can I help?');
   assert.equal(await replyWith('Hello! How can I help?'),'Hello! How can I help?');
 });
+test('SerpApi powers source-backed chat answers when Hugging Face is not configured', async () => {
+  const calls = [];
+  const fakeFetch = async url => {
+    const requestUrl = new URL(url);
+    calls.push(requestUrl);
+    if (requestUrl.searchParams.get('engine') === 'google') {
+      return {ok:true,status:200,json:async()=>({ai_overview:{page_token:'overview-token'}})};
+    }
+    return {
+      ok:true,status:200,json:async()=>({
+        ai_overview:{
+          text_blocks:[{type:'paragraph',snippet:'Singapore is a sovereign city-state in Southeast Asia.'}],
+          references:[{title:'Singapore overview',link:'https://example.com/singapore'}]
+        }
+      })
+    };
+  };
+  const reply=await generateReply({message:'What is Singapore?',history:[],context:{}},{SERPAPI_KEY:'serpapi-test',HF_TOKEN:'hf-test'},fakeFetch);
+  assert.match(reply,/^Hello! Singapore is a sovereign city-state in Southeast Asia\./);
+  assert.match(reply,/Singapore overview/);
+  assert.equal(calls[0].searchParams.get('engine'),'google');
+  assert.equal(calls[0].searchParams.get('gl'),'sg');
+  assert.equal(calls[0].searchParams.get('location'),'Singapore');
+  assert.equal(calls[1].searchParams.get('engine'),'google_ai_overview');
+  assert.equal(calls[1].searchParams.get('page_token'),'overview-token');
+});
+test('SerpApi chat explains when it can only provide search snippets', async () => {
+  const fakeFetch=async()=>({ok:true,status:200,json:async()=>({
+    organic_results:[{title:'Example result',snippet:'A sourced result summary.',link:'https://example.com/result'}]
+  })});
+  const reply=await generateReply({message:'Tell me something',history:[],context:{}},{SERPAPI_KEY:'serpapi-test'},fakeFetch);
+  assert.match(reply,/^Hello! I couldn't find a Google AI Overview/);
+  assert.match(reply,/A sourced result summary/);
+  assert.match(reply,/https:\/\/example\.com\/result/);
+});

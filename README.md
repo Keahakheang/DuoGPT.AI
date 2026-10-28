@@ -25,7 +25,7 @@ Your Netlify GitHub repo is `prajwaljha2007/shopwise_demo`. For this structure s
 4. **Strongly recommended for a public website:** add **`SEARCH_ACCESS_CODE`** as a separate secret (pick a private shared code, not a shopping password). Shopwise will prompt visitors for it before price searches. Without it, anyone can spend your API quota.
 5. Trigger a fresh deploy from the latest GitHub commit. Open Shopwise and test `rolled oats 1kg`.
 
-Keep `HF_TOKEN` if you want to keep trying Hugging Face's AI service; real price search does NOT require it. `CHAT_ACCESS_CODE` is optional and independent of the search code. If Hugging Face credits are exhausted, live shopping search should still work, while open-ended AI questions will not.
+When `SERPAPI_KEY` is configured, chat uses it to search Google and return a Google AI Overview when available, with source links. Search-backed chat replies use SerpApi quota; when Google does not provide an AI Overview, the chat reports that and shows relevant search-result summaries instead of inventing an answer. Hugging Face can be used as a fallback when `SERPAPI_KEY` is not set. `CHAT_ACCESS_CODE` is optional and independent of the search code.
 
 ### Verify backend
 
