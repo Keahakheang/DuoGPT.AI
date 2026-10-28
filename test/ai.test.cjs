@@ -20,7 +20,7 @@ test('Hugging Face request supports open-ended conversation with real shopping c
     outgoing = JSON.parse(options.body);
     return {ok: true, json: async () => ({choices: [{message: {content: '7'}}]})};
   };
-  const result = await generateReply({message:'What is 3 + 4?',history:[{role:'user',text:'Help with math'}],context:{selectedProduct:'oats',offers:[{store:'FairPrice',itemPriceSGD:5.95,title:'Rolled oats 1kg',sourceUrl:'https://example.com/oats'}],isSearchData:true}},{HF_TOKEN:'hf-test-only'},fakeFetch);
+  const result = await generateReply({message:'What is 3 + 4?',history:[{role:'user',text:'Help with math'}],context:{selectedProduct:'oats',offers:[{store:'Fairprice1',itemPriceSGD:5.95,title:'Rolled oats 1kg',sourceUrl:'https://example.com/oats'}],isSearchData:true}},{HF_TOKEN:'hf-test-only'},fakeFetch);
   assert.equal(result, '7');
   assert.equal(outgoing.model, DEFAULT_MODEL);
   assert.equal(outgoing.messages.at(-1).content, 'What is 3 + 4?');
