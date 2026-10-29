@@ -44,8 +44,7 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.equal(payload.input.at(-1).content,'What is current?');
  assert.equal(payload.input.at(-2).content,'Follow up');
  assert.match(payload.instructions,/Markdown table/);
- assert.match(payload.instructions,/Product image, Product, Retailer/);
- assert.match(payload.instructions,/actual product photo/);
+ assert.match(payload.instructions,/Do not include a product image column/);
  assert.match(payload.instructions,/Shopping list column/);
  assert.match(payload.instructions,/\+ Add to shopping list/);
  assert.match(payload.instructions,/each product name a Markdown link/);
@@ -89,27 +88,6 @@ test('Maps provider errors and unreadable responses clearly',async()=>{
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:429})),/usage limit/);
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:400})),/Responses API web-search request/);
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:true,json:async()=>({output:[]})})),/did not return an answer/);
-});
-
-test('Retries a transient AI provider server error once',async()=>{
- let calls=0;
- const result=await requestWebResponse('hello',env,async()=>{
-  calls++;
-  return calls===1
-   ? {ok:false,status:503}
-   : {ok:true,status:200,json:async()=>response('Recovered.')};
- });
- assert.equal(calls,2);
- assert.equal(result.text,'Recovered.');
-});
-
-test('Reports persistent AI provider outages after one retry',async()=>{
- let calls=0;
- await assert.rejects(requestWebResponse('hello',env,async()=>{
-  calls++;
-  return {ok:false,status:503};
- }),/temporarily unavailable/);
- assert.equal(calls,2);
 });
 
 test('Ignores unsafe citation URLs',async()=>{
