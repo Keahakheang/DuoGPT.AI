@@ -1,6 +1,24 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {verifyAccess, validateInput, generateReply, DEFAULT_MODEL, PROVIDER_URL} = require('../lib/ai.cjs');
+const {verifyAccess, validateInput, generateReply, getAIStatus, DEFAULT_MODEL, PROVIDER_URL} = require('../lib/ai.cjs');
+
+test('AI status follows provider priority and recognizes incomplete compatible-provider setup', () => {
+  assert.deepEqual(getAIStatus({
+    AI_API_KEY:'provider-test-key',
+    AI_BASE_URL:'https://example.com/v1',
+    AI_MODEL:'gpt-5.6-luna',
+    SERPAPI_KEY:'serpapi-test'
+  }), {aiConfigured:true,aiProvider:'OpenAI-compatible provider'});
+  assert.deepEqual(getAIStatus({AI_API_KEY:'provider-test-key',SERPAPI_KEY:'serpapi-test'}), {
+    aiConfigured:false,
+    aiProvider:'OpenAI-compatible provider'
+  });
+  assert.deepEqual(getAIStatus({SERPAPI_KEY:'serpapi-test',HF_TOKEN:'hf-test'}), {
+    aiConfigured:true,
+    aiProvider:'SerpApi Google AI Overview'
+  });
+  assert.deepEqual(getAIStatus({HF_TOKEN:'hf-test'}), {aiConfigured:true,aiProvider:'Hugging Face'});
+});
 
 test('Access code validation', () => {
   assert.equal(verifyAccess(undefined, undefined), true);
@@ -11,6 +29,10 @@ test('Reject empty message and invalid input', () => {
   assert.throws(() => validateInput({message: ''}), /Message must/);
   assert.throws(() => validateInput(null), /format/);
   assert.throws(() => validateInput({message:'x'.repeat(2001)}), /Message must/);
+});
+test('Ignores malformed shopping offers in optional chat context', () => {
+  const result = validateInput({message:'Compare these',context:{offers:[null,[],{store:'Shop',itemPriceSGD:5}]}});
+  assert.deepEqual(JSON.parse(result.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:''}]);
 });
 test('Hugging Face request supports open-ended conversation with real shopping context, no browser token', async () => {
   let outgoing;

@@ -39,7 +39,7 @@ If there is a problem, go to **Netlify → Logs → Functions** and inspect the 
 
 ## Local development
 
-Node.js 20+ required, no npm dependencies. In your terminal:
+Node.js 20.12+ required, no npm dependencies. For local development, the server loads an optional `.env.dev` file (ignored by Git). You can copy `.env.example` to `.env.dev` and fill in your local values, or set variables in your terminal:
 
 ```sh
 cd "shopwise_demo 2"
