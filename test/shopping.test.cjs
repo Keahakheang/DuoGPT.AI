@@ -5,7 +5,7 @@ const {ShoppingError,normalizeStore,normalizeResult,validateQuery,searchShopping
 
 const env={AI_BASE_URL:'https://newapi.omgteam.me/v1',AI_API_KEY:'provider-test-key',AI_MODEL:'gpt-5.6-luna'};
 const products=[
- {title:'Brand Oats 1 kg',merchant:'FairPrice',priceSGD:5.95,url:'https://www.fairprice.com.sg/product/oats-1kg'},
+ {title:'Brand Oats 1 kg',merchant:'FairPrice',priceSGD:5.95,url:'https://www.fairprice.com.sg/product/oats-1kg',imageUrl:'https://www.fairprice.com.sg/images/oats.jpg'},
  {title:'Brand Oats 1 kg',merchant:'Shopee Singapore',priceSGD:4.5,url:'https://shopee.sg/product/123'},
  {title:'Other oats 500 g',merchant:'Marketplace',priceSGD:3,url:'https://example.com/oats'},
  {title:'Not cited oats',merchant:'Shop',priceSGD:1,url:'https://uncited.example/product'}
@@ -24,8 +24,11 @@ const mock=async(url,options)=>{
  assert.equal(url,'https://newapi.omgteam.me/v1/responses');
  const payload=JSON.parse(options.body);
  assert.equal(payload.tools[0].type,'web_search');
- assert.equal(payload.tools[0].search_context_size,'low');
- assert.equal(payload.tool_choice,'auto');
+ assert.equal(payload.tools[0].search_context_size,'high');
+ assert.equal(payload.tool_choice,'required');
+ assert.match(payload.input,/Singapore/);
+ assert.match(payload.instructions,/only products explicitly sold or available in Singapore/);
+ assert.match(payload.instructions,/up to 25/);
  assert.equal(payload.text,undefined);
  return {ok:true,status:200,json:async()=>searchResponse};
 };
@@ -60,6 +63,14 @@ test('normalizes prices, retailer links, and actual markdowns safely',()=>{
  assert.equal(item.discount,15);
  assert.equal(item.price,5.95);
  assert.equal(item.merchant,'Fairprice1');
+ assert.equal(normalizeResult({
+  title:'Unsafe image',
+  source:'Fairprice',
+  extracted_price:5,
+  price:'S$5.00',
+  link:'https://www.fairprice.com.sg/product/oats',
+  imageUrl:'javascript:alert(1)'
+ },0).image,null);
  assert.equal(normalizeResult({title:'Invalid URL',price:'S$2',product_link:'javascript:alert(1)'},0),null);
 });
 
@@ -74,6 +85,7 @@ test('uses compatible live web search and only returns listings with cited HTTPS
  assert.equal(data.products.length,3);
  assert.equal(data.products[0].price,3);
  assert.equal(data.products.find(item=>item.merchant==='Fairprice1').price,5.95);
+ assert.equal(data.products.find(item=>item.merchant==='Fairprice1').image,'https://www.fairprice.com.sg/images/oats.jpg');
  assert.equal(data.stores.find(item=>item.name==='Shopee').results,1);
  assert.equal(data.cached,false);
  const cached=await searchShopping('rolled oats 1kg',env,async()=>{throw new Error('must use cache')});

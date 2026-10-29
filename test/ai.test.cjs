@@ -25,7 +25,7 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  const input=validateInput({message:'  hello  ',history:[{role:'system',text:'filtered'},{role:'user',text:'x'.repeat(1000)}],context:{offers:[null,{store:'Shop',itemPriceSGD:5}]}});
  assert.equal(input.message,'hello');
  assert.deepEqual(input.history,[{role:'user',content:'x'.repeat(850)}]);
- assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:''}]);
+ assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
 });
 
 test('Calls Responses API with web search and displays clickable citations',async()=>{
@@ -44,6 +44,7 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.equal(payload.input.at(-1).content,'What is current?');
  assert.equal(payload.input.at(-2).content,'Follow up');
  assert.match(payload.instructions,/Markdown table/);
+ assert.match(payload.instructions,/Product image column before Product/);
  assert.match(payload.instructions,/each product name a Markdown link/);
  assert.match(reply,/^Hello! A current answer\./);
  assert.match(reply,/\[Example source\]\(https:\/\/example\.com\/page\)/);
