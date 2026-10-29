@@ -24,11 +24,13 @@ const mock=async(url,options)=>{
  assert.equal(url,'https://newapi.omgteam.me/v1/responses');
  const payload=JSON.parse(options.body);
  assert.equal(payload.tools[0].type,'web_search');
- assert.equal(payload.tools[0].search_context_size,'high');
- assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tools[0].search_context_size,'low');
+ assert.equal(payload.tool_choice,'auto');
  assert.match(payload.input,/Singapore/);
  assert.match(payload.instructions,/only products explicitly sold or available in Singapore/);
- assert.match(payload.instructions,/up to 25/);
+ assert.match(payload.instructions,/up to 8/);
+ assert.equal(payload.max_output_tokens,900);
+ assert.equal(options.signal.aborted,false);
  assert.equal(payload.text,undefined);
  return {ok:true,status:200,json:async()=>searchResponse};
 };
@@ -92,7 +94,7 @@ test('uses compatible live web search and only returns listings with cited HTTPS
  assert.equal(cached.cached,true);
 });
 
-test('keeps up to 25 cited listings and their verified product images',async()=>{
+test('caps results at 8 and keeps verified product images',async()=>{
  const listings=Array.from({length:12},(_,index)=>({
   title:`Singapore oats ${index+1}`,
   merchant:'FairPrice',
@@ -103,13 +105,14 @@ test('keeps up to 25 cited listings and their verified product images',async()=>
  const data=await searchShopping('oats many results '+Date.now(),env,async(_url,options)=>{
   const payload=JSON.parse(options.body);
   assert.match(payload.instructions,/direct HTTPS image URL/);
+  assert.equal(payload.tools[0].search_context_size,'low');
   return {ok:true,status:200,json:async()=>({output:[{type:'message',content:[{
    type:'output_text',
    text:JSON.stringify({products:listings}),
    annotations:listings.map(item=>({type:'url_citation',url:item.url}))
   }]}]})};
  });
- assert.equal(data.products.length,12);
+ assert.equal(data.products.length,8);
  assert.equal(data.products[0].image,'https://www.fairprice.com.sg/images/oats-1.jpg');
 });
 
