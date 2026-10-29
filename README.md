@@ -1,73 +1,31 @@
-# Shopwise — actual Singapore shopping listings (v4)
+# Shopwise
 
-**What is real:** When `SERPAPI_KEY` is set, Search requests Singapore-localized Google Shopping listings through SerpApi. Product titles, listed prices, merchants, source links, old prices (if present) and retrieval timestamps come from the response. The app does not contain fictional product offers or fake vouchers.
+Shopwise is a shopping assistant powered by one OpenAI-compatible chat provider. It does not use a search API or fetch live retailer listings. Product searches open the retailer's own website; the assistant can help compare listing details that you provide, but cannot verify current prices, availability, promotions, or checkout totals.
 
-Price-comparison chat tables link to a retailer's product page when available, or to that retailer's own search page instead of a Google Shopping redirect. Multi-buy promotions are shown only when explicitly present in the retrieved listing.
+The saved notes and shopping list are local browser snapshots, not a synced account or retailer cart. Shopwise does not connect to retailer accounts or collect retailer credentials.
 
-**What this does not claim:** Shopwise does not have official account integrations with Fairprice1, Shopee, Lazada, Amazon SG, Cold Storage or RedMart. Google Shopping indexing is incomplete and results may mix pack sizes. Listed item prices can be stale; no guaranteed final delivery, taxes, checkout price, stock, coupon eligibility, or accurate seller matching. Search shortcuts link out to each real store. Saved shopping list is *not* a retailer checkout/cart.
+## Configure the AI provider
 
-## Publish on your existing Netlify project
+Set these server-side environment variables:
 
-This archive contains a folder **`shopwise_demo 2`**, matching your GitHub repository folder. Replace that folder's existing code, keeping the same path. Do not nest another `shopwise_demo 2` inside it.
+- `AI_API_KEY` — your private provider key
+- `AI_BASE_URL` — optional; defaults to `https://newapi.omgteam.me/v1`
+- `AI_MODEL` — optional; defaults to `gpt-5.6-luna`
+- `CHAT_ACCESS_CODE` — optional shared passcode for the chat
 
-Your Netlify GitHub repo is `prajwaljha2007/shopwise_demo`. For this structure set:
-
-- **Base directory**: `shopwise_demo 2`
-- **Publish directory**: `public` (relative to Base)
-- **Functions directory**: `netlify/functions` (relative to Base)
-- **Build command**: blank
-
-`netlify.toml` also declares publish, functions and redirects. Netlify can read it from the base directory.
-
-### Get your search API key
-
-1. Open https://serpapi.com/ and create an account, if eligible.
-2. Find your private API key in your SerpApi account dashboard. Check https://serpapi.com/pricing for current free availability and limits. As checked 2026-10-21, the Free plan lists 250 searches/month and 50 searches/hour; this may change.
-3. In **Netlify → Project configuration → Environment variables**, add a secret **`SERPAPI_KEY`** with your private key. Mark as a secret, and keep it out of GitHub.
-4. **Strongly recommended for a public website:** add **`SEARCH_ACCESS_CODE`** as a separate secret (pick a private shared code, not a shopping password). Shopwise will prompt visitors for it before price searches. Without it, anyone can spend your API quota.
-5. Trigger a fresh deploy from the latest GitHub commit. Open Shopwise and test `rolled oats 1kg`.
-
-For chat, you can configure an OpenAI-compatible provider with `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`. The model name must be supported by that provider. These settings are used in preference to the chat providers below, and the API key is sent only from the server. If no `AI_API_KEY` is set, chat uses `SERPAPI_KEY` for Google AI Overviews and source-backed search summaries when available; `HF_TOKEN` is the fallback when `SERPAPI_KEY` is not set. Search-backed chat replies use SerpApi quota. `CHAT_ACCESS_CODE` is optional and independent of the search code.
-
-### Verify backend
-
-Open `https://YOUR-SITE.netlify.app/api/status` to check for `shoppingConfigured:true`. This only confirms your private key is **present** on the server, not that the provider accepts it.
-
-Search through the website and look for real listing links. A missing Fairprice1 or Shopee result means Google Shopping did not return one; it does **not** mean the store has no product.
-
-If there is a problem, go to **Netlify → Logs → Functions** and inspect the function named `search`. Do not show logs containing secrets publicly.
+Never put the API key in browser code or commit it to GitHub. On Netlify, set the variables in **Project configuration → Environment variables**, then redeploy.
 
 ## Local development
 
-Node.js 20.12+ required, no npm dependencies. For local development, the server loads an optional `.env.dev` file (ignored by Git). You can copy `.env.example` to `.env.dev` and fill in your local values, or set variables in your terminal:
+Node.js 20.12+ is required. There are no npm dependencies. Copy `.env.example` to `.env.dev` and add your private key, or set environment variables in your terminal. `.env.dev` is ignored by Git.
 
-```sh
-cd "shopwise_demo 2"
-export SERPAPI_KEY="your_secret_key"
-# Optional OpenAI-compatible chat provider:
-export AI_BASE_URL="https://newapi.omgteam.me/v1"
-export AI_API_KEY="your_private_key"
-export AI_MODEL="your_provider_model"
-# optional: export SEARCH_ACCESS_CODE="your_secret_code"
+```powershell
+$env:AI_API_KEY="your_private_key"
+$env:AI_BASE_URL="https://newapi.omgteam.me/v1"
+$env:AI_MODEL="gpt-5.6-luna"
 npm start
 ```
 
-In PowerShell, use `$env:SERPAPI_KEY="your_secret_key"` and `$env:AI_API_KEY="your_private_key"` (and similarly for the other variables). For Netlify, set `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL` as server environment variables, then redeploy. Do not paste API keys into source files, commits, or client-side code.
+Open http://localhost:3000. Use `npm test` to run the test suite.
 
-Open http://localhost:3000. Run automated tests with `npm test`.
-
-## Security / scalability notes
-
-- Third-party API keys are used **server-side only**; never embed them into `app.js` or `index.html`.
-- Published product links are checked to be HTTPS; externally sourced text is escaped before display.
-- Client storage contains notes and shortlist; it is local to the browser, not a synced user account.
-- Five-minute in-memory cache helps local throughput, but serverless instances may not share cache. Google/SerpApi may also apply their own caching.
-- A shared access code is only a basic guard. A public production service needs persistent per-user rate limiting, authentication, usage caps, logging and vendor terms compliance. Consider Netlify platform controls and a durable database before scaling.
-- Never collect store usernames/passwords, payment card data, or secretly access retailer accounts. Real retailer cart or voucher support requires an approved integration and the user's consent.
-- Review search shortcuts open YouTube / Google results; reviews are **not** automatically analyzed.
-
-## Sources
-
-- SerpApi: https://serpapi.com/google-shopping-api and https://serpapi.com/pricing
-- Netlify: https://docs.netlify.com/build/functions/overview/
-- Google Merchant API handles a merchant's own catalog; it does not offer an unrestricted cross-retailer inventory API: https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list
+The status endpoint `/api/status` reports whether AI chat is configured; it does not validate the provider key. API keys are sent only from the server to the configured provider.
