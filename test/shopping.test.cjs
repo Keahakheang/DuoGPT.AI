@@ -24,6 +24,7 @@ const mock=async(url,options)=>{
  assert.equal(url,'https://newapi.omgteam.me/v1/responses');
  const payload=JSON.parse(options.body);
  assert.equal(payload.tools[0].type,'web_search');
+ assert.equal(payload.tools[0].search_context_size,'low');
  assert.equal(payload.tool_choice,'auto');
  assert.equal(payload.text,undefined);
  return {ok:true,status:200,json:async()=>searchResponse};
