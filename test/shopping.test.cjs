@@ -22,8 +22,10 @@ const searchResponse={
 };
 const mock=async(url,options)=>{
  assert.equal(url,'https://newapi.omgteam.me/v1/responses');
- assert.equal(JSON.parse(options.body).tools[0].type,'web_search');
- assert.equal(JSON.parse(options.body).tool_choice,'required');
+ const payload=JSON.parse(options.body);
+ assert.equal(payload.tools[0].type,'web_search');
+ assert.equal(payload.tool_choice,'auto');
+ assert.equal(payload.text,undefined);
  return {ok:true,status:200,json:async()=>searchResponse};
 };
 
@@ -64,7 +66,7 @@ test('requires AI credentials instead of returning fabricated listings',async()=
  await assert.rejects(()=>searchShopping('oats',{},mock),error=>error.status===503&&error.message.includes('AI_API_KEY'));
 });
 
-test('uses required live web search and only returns listings with cited HTTPS product URLs and SGD prices',async()=>{
+test('uses compatible live web search and only returns listings with cited HTTPS product URLs and SGD prices',async()=>{
  const data=await searchShopping('rolled oats 1kg',env,mock);
  assert.equal(data.query,'rolled oats 1kg');
  assert.equal(data.source,'AI web search');
