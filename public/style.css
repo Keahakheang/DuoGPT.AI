@@ -60,6 +60,15 @@
 /* Live Shopwise layout refinements; original visual language retained. */
 .navigation a { text-decoration:none }
 .nav-link,.nav-btn { text-decoration:none }
+body.assistant-page .hero { display:none }
+.workspace.assistant-layout { grid-template-columns:minmax(0,1fr) }
+.workspace.assistant-layout .promo-column,.workspace.assistant-layout .center-column { display:none }
+.workspace.assistant-layout .right-column { grid-column:1;display:flex }
+.workspace.assistant-layout .assistant-panel { min-height:0 }
+.workspace.assistant-layout .chat-box { height:min(58vh,680px);min-height:320px }
+@media(max-width:540px) {
+    .workspace.assistant-layout .chat-box { height:55vh;min-height:280px }
+}
 .nav-btn svg { width:17px;height:17px;flex-shrink:0 }
 .store-quick {padding:9px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .store-quick:last-child{border-bottom:0}
