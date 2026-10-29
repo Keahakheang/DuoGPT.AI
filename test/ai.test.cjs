@@ -91,6 +91,27 @@ test('Maps provider errors and unreadable responses clearly',async()=>{
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:true,json:async()=>({output:[]})})),/did not return an answer/);
 });
 
+test('Retries a transient AI provider server error once',async()=>{
+ let calls=0;
+ const result=await requestWebResponse('hello',env,async()=>{
+  calls++;
+  return calls===1
+   ? {ok:false,status:503}
+   : {ok:true,status:200,json:async()=>response('Recovered.')};
+ });
+ assert.equal(calls,2);
+ assert.equal(result.text,'Recovered.');
+});
+
+test('Reports persistent AI provider outages after one retry',async()=>{
+ let calls=0;
+ await assert.rejects(requestWebResponse('hello',env,async()=>{
+  calls++;
+  return {ok:false,status:503};
+ }),/temporarily unavailable/);
+ assert.equal(calls,2);
+});
+
 test('Ignores unsafe citation URLs',async()=>{
  const fakeFetch=async()=>({ok:true,status:200,json:async()=>response('An answer.',[
   {title:'Unsafe',url:'javascript:alert(1)'},
