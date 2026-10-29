@@ -44,7 +44,9 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.equal(payload.input.at(-1).content,'What is current?');
  assert.equal(payload.input.at(-2).content,'Follow up');
  assert.match(payload.instructions,/Markdown table/);
- assert.match(payload.instructions,/Product image column before Product/);
+ assert.match(payload.instructions,/Do not include a product image column/);
+ assert.match(payload.instructions,/Shopping list column/);
+ assert.match(payload.instructions,/\+ Add to shopping list/);
  assert.match(payload.instructions,/each product name a Markdown link/);
  assert.match(reply,/^Hello! A current answer\./);
  assert.match(reply,/\[Example source\]\(https:\/\/example\.com\/page\)/);
