@@ -29,7 +29,7 @@ test('Hugging Face request supports open-ended conversation with real shopping c
   assert.equal(outgoing.stream, false);
 });
 test('Missing token returns a friendly error', async () => {
-  await assert.rejects(generateReply({message: 'What is Singapore?'}, {}, ()=>{}), /SERPAPI_KEY or HF_TOKEN/);
+  await assert.rejects(generateReply({message: 'What is Singapore?'}, {}, ()=>{}), /AI_API_KEY, SERPAPI_KEY, or HF_TOKEN/);
 });
 test('No credits / authorization errors are friendly and do not expose upstream body', async () => {
   await assert.rejects(generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-secret'},async()=>({ok:false,status:402})), /credits may be exhausted/);
@@ -45,6 +45,25 @@ test('Different model can be configured without changing the HTML', async () => 
     return {ok:true,json:async()=>({choices:[{message:{content:'Hello!'}}]})};
   };
   assert.equal(await generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-x',HF_MODEL:'openai/gpt-oss-20b:cheapest'},fakeFetch),'Hello!');
+});
+test('OpenAI-compatible provider uses the configured endpoint, key, and model', async () => {
+  let request;
+  const fakeFetch = async (url, options) => {
+    request = {url, options};
+    return {ok:true,json:async()=>({choices:[{message:{content:'A useful answer.'}}]})};
+  };
+  const reply = await generateReply({message:'What is Singapore?'}, {
+    AI_BASE_URL:'https://newapi.omgteam.me/v1/',
+    AI_API_KEY:'provider-test-key',
+    AI_MODEL:'provider-model'
+  },fakeFetch);
+  assert.equal(reply,'Hello! A useful answer.');
+  assert.equal(request.url,'https://newapi.omgteam.me/v1/chat/completions');
+  assert.equal(request.options.headers.Authorization,'Bearer provider-test-key');
+  assert.equal(JSON.parse(request.options.body).model,'provider-model');
+});
+test('OpenAI-compatible provider requires base URL and model', async () => {
+  await assert.rejects(generateReply({message:'What is Singapore?'}, {AI_API_KEY:'provider-test'},()=>{}), /Set AI_BASE_URL and AI_MODEL/);
 });
 test('AI replies always start with Hello! without duplicating an existing greeting', async () => {
   const replyWith = content => generateReply({message:'What is Singapore?'}, {HF_TOKEN:'hf-test'}, async () => ({

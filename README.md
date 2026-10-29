@@ -27,7 +27,7 @@ Your Netlify GitHub repo is `prajwaljha2007/shopwise_demo`. For this structure s
 4. **Strongly recommended for a public website:** add **`SEARCH_ACCESS_CODE`** as a separate secret (pick a private shared code, not a shopping password). Shopwise will prompt visitors for it before price searches. Without it, anyone can spend your API quota.
 5. Trigger a fresh deploy from the latest GitHub commit. Open Shopwise and test `rolled oats 1kg`.
 
-When `SERPAPI_KEY` is configured, chat uses it to search Google and return a Google AI Overview when available, with source links. Search-backed chat replies use SerpApi quota; when Google does not provide an AI Overview, the chat reports that and shows relevant search-result summaries instead of inventing an answer. Hugging Face can be used as a fallback when `SERPAPI_KEY` is not set. `CHAT_ACCESS_CODE` is optional and independent of the search code.
+For chat, you can configure an OpenAI-compatible provider with `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL`. The model name must be supported by that provider. These settings are used in preference to the chat providers below, and the API key is sent only from the server. If no `AI_API_KEY` is set, chat uses `SERPAPI_KEY` for Google AI Overviews and source-backed search summaries when available; `HF_TOKEN` is the fallback when `SERPAPI_KEY` is not set. Search-backed chat replies use SerpApi quota. `CHAT_ACCESS_CODE` is optional and independent of the search code.
 
 ### Verify backend
 
@@ -44,9 +44,15 @@ Node.js 20+ required, no npm dependencies. In your terminal:
 ```sh
 cd "shopwise_demo 2"
 export SERPAPI_KEY="your_secret_key"
+# Optional OpenAI-compatible chat provider:
+export AI_BASE_URL="https://newapi.omgteam.me/v1"
+export AI_API_KEY="your_private_key"
+export AI_MODEL="your_provider_model"
 # optional: export SEARCH_ACCESS_CODE="your_secret_code"
 npm start
 ```
+
+In PowerShell, use `$env:SERPAPI_KEY="your_secret_key"` and `$env:AI_API_KEY="your_private_key"` (and similarly for the other variables). For Netlify, set `AI_BASE_URL`, `AI_API_KEY`, and `AI_MODEL` as server environment variables, then redeploy. Do not paste API keys into source files, commits, or client-side code.
 
 Open http://localhost:3000. Run automated tests with `npm test`.
 
