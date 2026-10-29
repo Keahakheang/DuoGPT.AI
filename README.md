@@ -33,7 +33,7 @@ Open http://localhost:3000. Run `npm test` for the test suite.
 
 ## Notes
 
-- Search results are limited to products explicitly sold or available in Singapore and are returned only when the AI response includes a cited HTTPS product URL and an explicit SGD price. Search coverage is broadened across local retailers; the model may still miss listings, and prices can be stale or incorrect. Product images appear only when a direct image URL is found on the cited retailer listing.
+- Search results are limited to products explicitly sold or available in Singapore and are returned only when the AI response includes a cited HTTPS product URL and an explicit SGD price. Search coverage is broadened across local retailers; the model may still miss listings, and prices can be stale or incorrect. Product images use verified image URLs from the result or product-photo metadata on supported Singapore retailer pages when available.
 - Retailer shortcuts open retailer websites directly.
 - Browser storage contains local notes and a shortlist, not an account or price-alert service.
 - A shared access code is only a basic guard. Public deployments should also use durable rate limiting and usage controls.

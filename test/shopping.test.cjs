@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {ShoppingError,normalizeStore,normalizeResult,validateQuery,searchShopping,authorized}=require('../lib/shopping.cjs');
+const {ShoppingError,normalizeStore,normalizeResult,validateQuery,imageFromProductPage,searchShopping,authorized}=require('../lib/shopping.cjs');
 
 const env={AI_BASE_URL:'https://newapi.omgteam.me/v1',AI_API_KEY:'provider-test-key',AI_MODEL:'gpt-5.6-luna'};
 const products=[
@@ -20,6 +20,7 @@ const searchResponse={
   }]
  }]
 };
+const noImageFetcher=async()=>({ok:false,status:404});
 const mock=async(url,options)=>{
  assert.equal(url,'https://newapi.omgteam.me/v1/responses');
  const payload=JSON.parse(options.body);
@@ -76,12 +77,19 @@ test('normalizes prices, retailer links, and actual markdowns safely',()=>{
  assert.equal(normalizeResult({title:'Invalid URL',price:'S$2',product_link:'javascript:alert(1)'},0),null);
 });
 
+test('extracts actual product photos from retailer metadata or Product JSON-LD',()=>{
+ const page='https://www.fairprice.com.sg/product/bread';
+ assert.equal(imageFromProductPage('<meta property="og:image" content="https://cdn.fairprice.com.sg/bread.jpg?x=1&amp;y=2">',page),'https://cdn.fairprice.com.sg/bread.jpg?x=1&y=2');
+ assert.equal(imageFromProductPage('<script type="application/ld+json">{"@type":"Product","image":["https://cdn.fairprice.com.sg/bread-front.jpg"]}</script>',page),'https://cdn.fairprice.com.sg/bread-front.jpg');
+ assert.equal(imageFromProductPage('<meta property="og:image" content="javascript:alert(1)">',page),null);
+});
+
 test('requires AI credentials instead of returning fabricated listings',async()=>{
  await assert.rejects(()=>searchShopping('oats',{},mock),error=>error.status===503&&error.message.includes('AI_API_KEY'));
 });
 
 test('uses compatible live web search and only returns listings with cited HTTPS product URLs and SGD prices',async()=>{
- const data=await searchShopping('rolled oats 1kg',env,mock);
+ const data=await searchShopping('rolled oats 1kg',env,mock,noImageFetcher);
  assert.equal(data.query,'rolled oats 1kg');
  assert.equal(data.source,'AI web search');
  assert.equal(data.products.length,3);
@@ -111,9 +119,24 @@ test('caps results at 8 and keeps verified product images',async()=>{
    text:JSON.stringify({products:listings}),
    annotations:listings.map(item=>({type:'url_citation',url:item.url}))
   }]}]})};
- });
+ },noImageFetcher);
  assert.equal(data.products.length,8);
  assert.equal(data.products[0].image,'https://www.fairprice.com.sg/images/oats-1.jpg');
+});
+
+test('fetches a missing product image from the cited Singapore retailer page',async()=>{
+ const result=await searchShopping('bread image '+Date.now(),env,async()=>({
+  ok:true,status:200,json:async()=>({output:[{type:'message',content:[{
+   type:'output_text',
+   text:JSON.stringify({products:[{title:'FairPrice White Bread',merchant:'FairPrice',priceSGD:1.25,url:'https://www.fairprice.com.sg/product/bread',imageUrl:null}]}),
+   annotations:[{type:'url_citation',url:'https://www.fairprice.com.sg/product/bread'}]
+  }]}]})
+ }),async(url,options)=>{
+  assert.equal(url,'https://www.fairprice.com.sg/product/bread');
+  assert.equal(options.redirect,'manual');
+  return {ok:true,status:200,headers:{get:()=> 'text/html'},text:async()=>'<meta property="og:image" content="https://cdn.fairprice.com.sg/white-bread.jpg">'};
+ });
+ assert.equal(result.products[0].image,'https://cdn.fairprice.com.sg/white-bread.jpg');
 });
 
 test('ignores uncited pages, missing price data, and malformed JSON',async()=>{
@@ -123,7 +146,7 @@ test('ignores uncited pages, missing price data, and malformed JSON',async()=>{
  ]});
  const data=await searchShopping('fresh query '+Date.now(),env,async()=>({
   ok:true,status:200,json:async()=>({output:[{type:'message',content:[{type:'output_text',text,annotations:products.slice(0,3).map(item=>({type:'url_citation',url:item.url}))}]}]})
- }));
+ }),noImageFetcher);
  assert.equal(data.products.length,3);
  await assert.rejects(()=>searchShopping('invalid json '+Date.now(),env,async()=>({
   ok:true,status:200,json:async()=>({output:[{type:'message',content:[{type:'output_text',text:'not JSON',annotations:[]}]}]})

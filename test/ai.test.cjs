@@ -44,7 +44,8 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.equal(payload.input.at(-1).content,'What is current?');
  assert.equal(payload.input.at(-2).content,'Follow up');
  assert.match(payload.instructions,/Markdown table/);
- assert.match(payload.instructions,/Do not include a product image column/);
+ assert.match(payload.instructions,/Product image, Product, Retailer/);
+ assert.match(payload.instructions,/actual product photo/);
  assert.match(payload.instructions,/Shopping list column/);
  assert.match(payload.instructions,/\+ Add to shopping list/);
  assert.match(payload.instructions,/each product name a Markdown link/);
