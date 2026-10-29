@@ -16,7 +16,7 @@ const searchResponse={
   content:[{
    type:'output_text',
    text:JSON.stringify({products}),
-   annotations:products.slice(0,3).map(item=>({type:'url_citation',title:item.merchant,url:item.url}))
+   annotations:products.slice(0,3).map((item,index)=>({type:'url_citation',title:item.merchant,url:index===0?item.url.replace('https://www.','https://'):item.url}))
   }]
  }]
 };
