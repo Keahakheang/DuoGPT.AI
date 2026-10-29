@@ -92,6 +92,27 @@ test('uses compatible live web search and only returns listings with cited HTTPS
  assert.equal(cached.cached,true);
 });
 
+test('keeps up to 25 cited listings and their verified product images',async()=>{
+ const listings=Array.from({length:12},(_,index)=>({
+  title:`Singapore oats ${index+1}`,
+  merchant:'FairPrice',
+  priceSGD:index+1,
+  url:`https://www.fairprice.com.sg/product/oats-${index+1}`,
+  imageUrl:`https://www.fairprice.com.sg/images/oats-${index+1}.jpg`
+ }));
+ const data=await searchShopping('oats many results '+Date.now(),env,async(_url,options)=>{
+  const payload=JSON.parse(options.body);
+  assert.match(payload.instructions,/direct HTTPS image URL/);
+  return {ok:true,status:200,json:async()=>({output:[{type:'message',content:[{
+   type:'output_text',
+   text:JSON.stringify({products:listings}),
+   annotations:listings.map(item=>({type:'url_citation',url:item.url}))
+  }]}]})};
+ });
+ assert.equal(data.products.length,12);
+ assert.equal(data.products[0].image,'https://www.fairprice.com.sg/images/oats-1.jpg');
+});
+
 test('ignores uncited pages, missing price data, and malformed JSON',async()=>{
  const text=JSON.stringify({products:[
   ...products.slice(0,3),
