@@ -80,6 +80,8 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.equal(payload.tools[0].search_context_size,'low');
  assert.equal(payload.max_output_tokens,1800);
  assert.match(payload.instructions,/one suitable purchasable pack for each requested line/);
+ assert.match(payload.instructions,/actual cited HTTPS product-page URL/);
+ assert.match(payload.instructions,/Never use internal search references such as turn0search9/);
  assert.match(payload.instructions,/give a clearly labeled subtotal for priced items instead of guessing/);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).budgetEstimate,true);

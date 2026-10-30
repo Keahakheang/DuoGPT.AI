@@ -64,6 +64,20 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.deepEqual(chatRequest.context.offers,[]);
  assert.ok(elements.get('right').innerHTML.includes('this week cooking'));
  assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20.'));
+ context.budgetReply=[
+  'Hello!',
+  '',
+  '| Product | Retailer | Listed price (SGD) | Relevant details | Shopping list |',
+  '| --- | --- | ---: | --- | --- |',
+  '| [Pasar Fresh Malaysia Lean Minced Pork 300g](turn0search9) | NTUC FairPrice | S$5.80 | Pack contains 300g | + Add to shopping list |',
+  '',
+  'Estimated listed-price budget: S$5.80.'
+ ].join('\n');
+ vm.runInContext("state.chats=[{role:'assistant',text:budgetReply}];renderRight()",context);
+ const budgetHtml=elements.get('right').innerHTML;
+ assert.match(budgetHtml,/<a href="https:\/\/www\.fairprice\.com\.sg\/search\?query=/);
+ assert.ok(budgetHtml.includes('>Pasar Fresh Malaysia Lean Minced Pork 300g</a>'));
+ assert.ok(!budgetHtml.includes('turn0search9'));
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);
  assert.ok(!elements.get('center').innerHTML.includes('this week cooking'));
