@@ -4,11 +4,11 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 
-test('chat table buttons add every row to the persistent shopping list',()=>{
+test('shopping list buttons and saved text notes persist locally',()=>{
  const handlers={};
  const elements=new Map();
  const makeElement=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
- for(const id of ['toast','navigation','page-title','page-sub','workspace','promos','center','right','chat-scroll'])elements.set(id,makeElement());
+ for(const id of ['toast','navigation','page-title','page-sub','workspace','promos','center','right','chat-scroll','note-text'])elements.set(id,makeElement());
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
@@ -41,4 +41,15 @@ test('chat table buttons add every row to the persistent shopping list',()=>{
  assert.equal((summary.match(/^\| \[Product \d+\]/gm)||[]).length,12);
  assert.ok(summary.includes('[Product 12]'));
  assert.ok(!summary.includes('[Product 13]'));
+ handlers.click({target:{closest:()=>({dataset:{action:'page',id:'saved'}})}});
+ assert.match(elements.get('center').innerHTML,/id="note-form"/);
+ assert.match(elements.get('center').innerHTML,/id="note-text"/);
+ elements.get('note-text').value='Buy apples & milk\nCheck the package size.';
+ handlers.submit({target:{id:'note-form'},preventDefault(){}});
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].text,'Buy apples & milk\nCheck the package size.');
+ assert.ok(elements.get('center').innerHTML.includes('Buy apples &amp; milk\nCheck the package size.'));
+ const noteId=JSON.parse(stored['shopwise-live-v1']).notes[0].id;
+ handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);
+ assert.ok(!elements.get('center').innerHTML.includes('Buy apples'));
 });
