@@ -24,6 +24,8 @@ test('chat table buttons add every row to the persistent shopping list',()=>{
  context.fixtureText=fixtureText;
  vm.runInContext("state.results=[];state.chats=[{role:'assistant',text:fixtureText}];renderRight()",context);
  assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,3);
+ assert.ok(!elements.get('right').innerHTML.includes('Lowest listed'));
+ assert.ok(elements.get('right').innerHTML.includes('data-action="help"'));
  for(let index=0;index<3;index++)handlers.click({target:{closest:()=>({dataset:{action:'chat-cart-add',index:String(index)}})}});
  const cart=JSON.parse(vm.runInContext('JSON.stringify(state.cart)',context));
  assert.equal(cart.length,3);
@@ -33,4 +35,10 @@ test('chat table buttons add every row to the persistent shopping list',()=>{
  handlers.click({target:{closest:()=>({dataset:{action:'page',id:'cart'}})}});
  for(const title of ['Australia Strawberries 250g','Australia Strawberries 250G','Strawberries 250G+'])assert.ok(elements.get('center').innerHTML.includes(title));
  assert.ok(elements.get('center').innerHTML.includes('S$16.30'));
+ context.catalogRows=Array.from({length:16},(_,index)=>({id:`item-${index+1}`,title:`Product ${index+1}`,merchant:'Fairprice1',price:index+1,url:`https://www.fairprice.com.sg/product/${index+1}`,observedAt:new Date().toISOString()}));
+ vm.runInContext('state.results=catalogRows',context);
+ const summary=vm.runInContext('summaryText()',context);
+ assert.equal((summary.match(/^\| \[Product \d+\]/gm)||[]).length,12);
+ assert.ok(summary.includes('[Product 12]'));
+ assert.ok(!summary.includes('[Product 13]'));
 });

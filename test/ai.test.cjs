@@ -40,6 +40,8 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  const payload=JSON.parse(request.options.body);
  assert.equal(payload.model,'gpt-5.6-luna');
  assert.equal(payload.tools[0].type,'web_search');
+ assert.equal(payload.tools[0].search_context_size,'medium');
+ assert.equal(payload.max_output_tokens,700);
  assert.equal(payload.tools[0].user_location.country,'SG');
  assert.equal(payload.input.at(-1).content,'What is current?');
  assert.equal(payload.input.at(-2).content,'Follow up');
@@ -50,6 +52,20 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.match(payload.instructions,/each product name a Markdown link/);
  assert.match(reply,/^Hello! A current answer\./);
  assert.match(reply,/\[Example source\]\(https:\/\/example\.com\/page\)/);
+});
+
+test('uses faster search and expanded listing context for shopping comparisons',async()=>{
+ let payload;
+ const offers=Array.from({length:20},(_,index)=>({store:'Shop '+index,itemPriceSGD:index+1,title:'Product '+index,sourceUrl:`https://example.com/${index}`}));
+ await generateReply({message:'Compare prices for strawberries from different stores',context:{offers}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('A sourced price comparison.')};
+ });
+ assert.equal(payload.tools[0].search_context_size,'low');
+ assert.equal(payload.max_output_tokens,1400);
+ const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ assert.equal(JSON.parse(contextMessage).offers.length,16);
+ assert.match(payload.instructions,/up to 12 distinct, verifiable listings/);
 });
 
 test('Can require an actual web search for shopping lookups',async()=>{

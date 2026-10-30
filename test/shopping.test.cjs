@@ -28,8 +28,8 @@ const mock=async(url,options)=>{
  assert.equal(payload.tool_choice,'auto');
  assert.match(payload.input,/Singapore/);
  assert.match(payload.instructions,/only products explicitly sold or available in Singapore/);
- assert.match(payload.instructions,/up to 8/);
- assert.equal(payload.max_output_tokens,900);
+ assert.match(payload.instructions,/up to 16/);
+ assert.equal(payload.max_output_tokens,1800);
  assert.equal(options.signal.aborted,false);
  assert.equal(payload.text,undefined);
  return {ok:true,status:200,json:async()=>searchResponse};
@@ -94,8 +94,8 @@ test('uses compatible live web search and only returns listings with cited HTTPS
  assert.equal(cached.cached,true);
 });
 
-test('caps results at 8 and keeps verified product images',async()=>{
- const listings=Array.from({length:12},(_,index)=>({
+test('returns up to 16 verified results and keeps product images',async()=>{
+ const listings=Array.from({length:20},(_,index)=>({
   title:`Singapore oats ${index+1}`,
   merchant:'FairPrice',
   priceSGD:index+1,
@@ -112,7 +112,7 @@ test('caps results at 8 and keeps verified product images',async()=>{
    annotations:listings.map(item=>({type:'url_citation',url:item.url}))
   }]}]})};
  });
- assert.equal(data.products.length,8);
+ assert.equal(data.products.length,16);
  assert.equal(data.products[0].image,'https://www.fairprice.com.sg/images/oats-1.jpg');
 });
 
