@@ -8,7 +8,7 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const handlers={};
  const elements=new Map();
  const makeElement=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
- for(const id of ['toast','navigation','page-title','page-sub','workspace','promos','center','right','chat-scroll','note-text'])elements.set(id,makeElement());
+ for(const id of ['toast','navigation','page-title','page-sub','workspace','promos','center','right','chat-scroll','note-title','note-text'])elements.set(id,makeElement());
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
@@ -48,10 +48,14 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.ok(!summary.includes('[Product 13]'));
  handlers.click({target:{closest:()=>({dataset:{action:'page',id:'saved'}})}});
  assert.match(elements.get('center').innerHTML,/id="note-form"/);
+ assert.match(elements.get('center').innerHTML,/id="note-title"/);
  assert.match(elements.get('center').innerHTML,/id="note-text"/);
+ elements.get('note-title').value='Weekly groceries';
  elements.get('note-text').value='this week cooking\n- pork: 200g\n- broccoli: 200g\n- milk: 500ml';
  handlers.submit({target:{id:'note-form'},preventDefault(){}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].text,elements.get('note-text').value);
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].title,'Weekly groceries');
+ assert.ok(elements.get('center').innerHTML.includes('<h4 class="personal-note-title">Weekly groceries</h4>'));
  assert.match(elements.get('center').innerHTML,/aria-label="Note actions"/);
  assert.match(elements.get('center').innerHTML,/data-action="note-products" data-id=/);
  assert.ok(!elements.get('center').innerHTML.includes('Find products &amp; estimate budget</button></div></div></form>'));
