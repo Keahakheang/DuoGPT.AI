@@ -26,6 +26,7 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  assert.equal(input.message,'hello');
  assert.deepEqual(input.history,[{role:'user',content:'x'.repeat(850)}]);
  assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
+ assert.equal(JSON.parse(input.context).budgetEstimate,false);
 });
 
 test('Calls Responses API with web search and displays clickable citations',async()=>{
@@ -66,6 +67,24 @@ test('uses faster search and expanded listing context for shopping comparisons',
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).offers.length,16);
  assert.match(payload.instructions,/up to 12 distinct, verifiable listings/);
+});
+
+test('requires a live search and price-grounded budget for a typed shopping list',async()=>{
+ let payload;
+ const shoppingList='this week cooking\n- pork: 200g\n- broccoli: 200g\n- milk: 500ml';
+ const reply=await generateReply({message:shoppingList,context:{budgetEstimate:true}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! Estimated listed-price budget: S$18.20. Pork and broccoli prices are approximate.')};
+ });
+ assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tools[0].search_context_size,'low');
+ assert.equal(payload.max_output_tokens,1800);
+ assert.match(payload.instructions,/one suitable purchasable pack for each requested line/);
+ assert.match(payload.instructions,/give a clearly labeled subtotal for priced items instead of guessing/);
+ const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ assert.equal(JSON.parse(contextMessage).budgetEstimate,true);
+ assert.equal(payload.input.at(-1).content,shoppingList);
+ assert.match(reply,/Estimated listed-price budget: S\$18\.20/);
 });
 
 test('Can require an actual web search for shopping lookups',async()=>{

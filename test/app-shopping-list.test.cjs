@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 
-test('shopping list buttons and saved text notes persist locally',()=>{
+test('shopping list buttons, saved text notes, and note-to-chat search work',async()=>{
  const handlers={};
  const elements=new Map();
  const makeElement=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
@@ -12,6 +12,11 @@ test('shopping list buttons and saved text notes persist locally',()=>{
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
+ let chatRequest;
+ const fetch=async(url,options)=>{
+  if(url==='/api/chat'){chatRequest=JSON.parse(options.body);return {ok:true,json:async()=>({reply:'Hello! Estimated listed-price budget: S$18.20.'})}}
+  return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
+ };
  const fixtureText=[
   '| Product | Retailer | Listed price (SGD) | Relevant details | Shopping list |',
   '| --- | --- | ---: | --- | --- |',
@@ -19,7 +24,7 @@ test('shopping list buttons and saved text notes persist locally',()=>{
   '| [Australia Strawberries 250G](https://www.lazada.sg/products/strawberries) | RedMart | S$5.45 | Sold by RedMart | + Add to shopping list |',
   '| [Strawberries 250G+](https://shopee.sg/product/strawberries) | Shopee Singapore | S$5.90 | Approx. 250g | + Add to shopping list |'
  ].join('\n');
- const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch:()=>new Promise(()=>{}),setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
+ const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
  context.fixtureText=fixtureText;
  vm.runInContext("state.results=[];state.chats=[{role:'assistant',text:fixtureText}];renderRight()",context);
@@ -52,4 +57,13 @@ test('shopping list buttons and saved text notes persist locally',()=>{
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);
  assert.ok(!elements.get('center').innerHTML.includes('Buy apples'));
+ vm.runInContext('state.aiConfigured=true',context);
+ elements.get('note-text').value='this week cooking\n- pork: 200g\n- broccoli: 200g\n- milk: 500ml';
+ handlers.click({target:{closest:()=>({dataset:{action:'note-products'}})}});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(chatRequest.message,elements.get('note-text').value);
+ assert.equal(chatRequest.context.budgetEstimate,true);
+ assert.deepEqual(chatRequest.context.offers,[]);
+ assert.ok(elements.get('right').innerHTML.includes('this week cooking'));
+ assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20.'));
 });

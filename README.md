@@ -2,7 +2,7 @@
 
 Shopwise uses an OpenAI-compatible provider's **Responses API web search tool** for live product searches and AI answers. The provider and selected model must have web search enabled. Product titles and listed prices are extracted from cited web results; coverage and price accuracy vary, and users should verify the exact item and final checkout total with the retailer. Shopwise does not connect to retailer accounts or add items to retailer carts.
 
-The saved shopping list is a local browser shortlist, not a checkout cart.
+Saved notes and the shopping list stay in the local browser. From a note, users can ask Shopwise to search current Singapore product listings and estimate a budget using cited SGD prices; unverified items are excluded from the estimate.
 
 ## Configure the provider
 
