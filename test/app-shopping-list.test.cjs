@@ -12,9 +12,9 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
- let chatRequest;
+ let chatRequest,resolveChat;
  const fetch=async(url,options)=>{
-  if(url==='/api/chat'){chatRequest=JSON.parse(options.body);return {ok:true,json:async()=>({reply:'Hello! Estimated listed-price budget: S$18.20.'})}}
+  if(url==='/api/chat'){chatRequest=JSON.parse(options.body);return new Promise(resolve=>{resolveChat=()=>resolve({ok:true,json:async()=>({reply:'Hello! Estimated listed-price budget: S$18.20.'})})})}
   return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
  };
  const fixtureText=[
@@ -62,18 +62,23 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const noteId=JSON.parse(stored['shopwise-live-v1']).notes[0].id;
  vm.runInContext('state.aiConfigured=true',context);
  handlers.click({target:{closest:()=>({dataset:{action:'note-products',id:noteId},closest:()=>({removeAttribute(){}})})}});
- await new Promise(resolve=>setImmediate(resolve));
+ const noteText=JSON.parse(stored['shopwise-live-v1']).notes[0].text;
  assert.equal(chatRequest.message,JSON.parse(stored['shopwise-live-v1']).notes[0].text);
  assert.equal(chatRequest.context.budgetEstimate,true);
  assert.deepEqual(chatRequest.context.offers,[]);
- assert.ok(elements.get('right').innerHTML.includes('this week cooking'));
+ assert.ok(elements.get('right').innerHTML.includes('Analyzing your note and checking product prices…'));
+ assert.ok(!elements.get('right').innerHTML.includes(noteText));
+ assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user")',context),false);
+ resolveChat();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20.'));
+ assert.ok(!elements.get('right').innerHTML.includes(noteText));
  context.budgetReply=[
   'Hello!',
   '',
   '| Product | Retailer | Listed price (SGD) | Relevant details | Shopping list |',
   '| --- | --- | ---: | --- | --- |',
-  '| [Pasar Fresh Malaysia Lean Minced Pork 300g](turn0search9) | NTUC FairPrice | S$5.80 | Pack contains 300g | + Add to shopping list |',
+  '| [Pasar Fresh Malaysia Lean Minced Pork 300g](turn0search9) | NTUC FairPrice | S$5.80<br>300g | Pack contains 300g; S$1.93/100g; origin: Malaysia (listed); rating: Not verified | + Add to shopping list |',
   '',
   'Estimated listed-price budget: S$5.80.'
  ].join('\n');
@@ -81,6 +86,8 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const budgetHtml=elements.get('right').innerHTML;
  assert.match(budgetHtml,/<a href="https:\/\/www\.fairprice\.com\.sg\/search\?query=/);
  assert.ok(budgetHtml.includes('>Pasar Fresh Malaysia Lean Minced Pork 300g</a>'));
+ assert.ok(budgetHtml.includes('S$5.80<br>300g'));
+ assert.ok(budgetHtml.includes('S$1.93/100g'));
  assert.ok(!budgetHtml.includes('turn0search9'));
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);

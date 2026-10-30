@@ -49,6 +49,10 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.match(payload.instructions,/Markdown table/);
  assert.match(payload.instructions,/Do not include a product image column/);
  assert.match(payload.instructions,/Shopping list column/);
+ assert.match(payload.instructions,/pack weight on a second line inside the Listed price cell, separated with <br>/);
+ assert.match(payload.instructions,/per-100g price calculated from the cited SGD price and cited net weight/);
+ assert.match(payload.instructions,/arithmetic average of the per-100g prices/);
+ assert.match(payload.instructions,/country of origin and product ratings\/reviews only when directly supported by cited sources/);
  assert.match(payload.instructions,/\+ Add to shopping list/);
  assert.match(payload.instructions,/each product name a Markdown link/);
  assert.match(reply,/^Hello! A current answer\./);
@@ -82,6 +86,8 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.match(payload.instructions,/one suitable purchasable pack for each requested line/);
  assert.match(payload.instructions,/actual cited HTTPS product-page URL/);
  assert.match(payload.instructions,/Never use internal search references such as turn0search9/);
+ assert.match(payload.instructions,/verified pack weight on the next line using <br>/);
+ assert.match(payload.instructions,/average price per 100g across all rows with cited weights/);
  assert.match(payload.instructions,/give a clearly labeled subtotal for priced items instead of guessing/);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).budgetEstimate,true);
