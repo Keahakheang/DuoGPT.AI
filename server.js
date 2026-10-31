@@ -3,14 +3,16 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const {generateReply,AppError,verifyAccess,getAIStatus}=require('./lib/ai.cjs');
 const {searchShopping,ShoppingError,authorized}=require('./lib/shopping.cjs');
+const {extensionCorsHeaders}=require('./lib/extension-cors.cjs');
 try{process.loadEnvFile(path.join(__dirname,'.env.dev'))}catch(err){if(err.code!=='ENOENT')throw err}
 const PORT=Number(process.env.PORT||3000),PUBLIC=path.resolve(__dirname,'public');
 function send(res,status,data,type='application/json; charset=utf-8'){
- res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY'});
- res.end(typeof data==='string'||Buffer.isBuffer(data)?data:JSON.stringify(data));
+ res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY',...extensionCorsHeaders(res.req.headers.origin)});
+ res.end(status===204?'':typeof data==='string'||Buffer.isBuffer(data)?data:JSON.stringify(data));
 }
 function readJSON(req){return new Promise((resolve,reject)=>{let s='';req.on('data',chunk=>{s+=chunk;if(s.length>22000){reject(new AppError(413,'Too large'));req.destroy()}});req.on('end',()=>{try{resolve(JSON.parse(s))}catch{reject(new AppError(400,'Invalid JSON'))}});req.on('error',reject)})}
 async function route(req,res){const u=new URL(req.url,'http://localhost');
+ if(req.method==='OPTIONS'&&['/api/status','/api/search','/api/chat'].includes(u.pathname))return send(res,204,null);
  if(req.method==='GET'&&u.pathname==='/api/status'){const aiStatus=getAIStatus();return send(res,200,{...aiStatus,shoppingConfigured:aiStatus.aiConfigured,shoppingRequiresCode:!!process.env.SEARCH_ACCESS_CODE,requiresCode:!!process.env.CHAT_ACCESS_CODE,liveRetailersConnected:false})}
  if(req.method==='GET'&&u.pathname==='/api/search'){
   if(!authorized(process.env.SEARCH_ACCESS_CODE,req.headers['x-shopwise-search-code']))return send(res,401,{error:'Enter your search access code.'});

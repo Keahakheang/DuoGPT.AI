@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Shopwise — Shopping Assistant",
+  "version": "1.0.0",
+  "description": "Search shopping listings, ask Shopwise, and save promo codes in your browser side panel.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "sidePanel",
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Shopwise"
+  },
+  "side_panel": {
+    "default_path": "app/index.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}

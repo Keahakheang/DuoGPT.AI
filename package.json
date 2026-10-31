@@ -5,6 +5,7 @@
   "description": "Shopwise shopping search and assistant using AI web search",
   "scripts": {
     "start": "node server.js",
+    "build:extension": "node extension/build.mjs",
     "test": "node --test"
   },
   "engines": {

@@ -31,6 +31,17 @@ npm start
 
 Open http://localhost:3000. Run `npm test` for the test suite.
 
+## Chrome and Edge side-panel extension
+
+The extension reuses the Shopwise frontend and your deployed API. Build it with `npm run build:extension`; the unpacked extension files are written to `extension/dist`.
+
+1. Open `chrome://extensions` in Chrome or `edge://extensions` in Edge, then enable **Developer mode**.
+2. Choose **Load unpacked** and select the `extension/dist` folder.
+3. Open the Shopwise extension settings and enter your deployed Shopwise website's HTTPS origin, then approve access to that site.
+4. Click the extension icon to open Shopwise in the browser side panel.
+
+For local development, run `npm start` and use `http://localhost:3000` as the server URL. The extension stores its notes and saved promo codes in extension-local browser storage, separately from the website. Extension API access is limited to the configured site; CORS responses allow only Chrome extension origins. AI provider credentials remain server-side.
+
 ## Notes
 
 - Search results request up to 16 distinct products across Singapore retailers and are returned only when the AI response includes a cited HTTPS product URL and an explicit SGD price. Shopping searches use the provider's low-latency search context; actual coverage depends on the provider and may return fewer results. Prices can be stale or incorrect. Product images appear only when a direct image URL is found on the cited retailer listing.

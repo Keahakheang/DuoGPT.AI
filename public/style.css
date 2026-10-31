@@ -12,6 +12,8 @@
     .nav-btn{border:0;width:100%;display:flex;align-items:center;gap:12px;border-radius:12px;padding:12px 12px;color:#6d7c76;background:transparent;font-size:13px;font-weight:650;text-align:left;margin-bottom:6px;transition:.18s}
     .nav-btn:hover{background:#f5f7f5;color:#243a31}.nav-btn.active{color:var(--accent);background:var(--mint)}.nav-btn .count{margin-left:auto;background:var(--accent);color:#fff;padding:2px 7px;font-size:10px;border-radius:99px}
     .main{min-width:0;padding:25px 30px 35px}
+    .extension-setup{margin:-10px 0 18px;padding:12px 14px;border:1px solid #eddbbd;border-radius:10px;background:#fff7e9;color:#795916;font-size:12px;line-height:1.55}
+    .extension-setup a{margin-left:5px;color:var(--accent);font-weight:800;text-decoration:underline;text-underline-offset:2px}
     .topbar{display:flex;align-items:center;gap:18px;justify-content:space-between;margin-bottom:24px}
     .eyebrow{display:flex;align-items:center;gap:6px;text-transform:uppercase;font-size:10px;font-weight:850;letter-spacing:1.5px;color:var(--accent)}
     .page-title{font-size:28px;margin:5px 0 0;letter-spacing:-1px;line-height:1.18;font-weight:800}.page-sub{font-size:12px;color:var(--muted);margin:7px 0 0}
