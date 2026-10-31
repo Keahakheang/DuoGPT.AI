@@ -63,8 +63,11 @@ body.assistant-page .hero { display:none }
 .workspace.assistant-layout .right-column { grid-column:1;display:flex }
 .workspace.assistant-layout .assistant-panel { min-height:0 }
 .workspace.assistant-layout .chat-box { height:min(58vh,680px);min-height:320px }
-.assistant-landing .topbar { display:none }
-.assistant-landing .workspace.assistant-layout .right-column { min-height:calc(100vh - 60px);align-items:center;justify-content:center }
+.assistant-landing .main { min-height:100vh;display:flex;flex-direction:column }
+.assistant-landing .topbar { flex:0 0 auto;margin-bottom:0 }
+.assistant-landing .top-actions,.assistant-landing .page-sub { display:none }
+.assistant-landing .workspace.assistant-layout { flex:1;min-height:0 }
+.assistant-landing .workspace.assistant-layout .right-column { min-height:0;align-items:center;justify-content:center }
 .assistant-landing-panel { width:min(780px,100%);display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px }
 .welcome-popover { width:min(560px,100%);display:flex;align-items:flex-start;gap:14px;padding:20px 22px;border:1px solid #dcebe1;border-radius:20px;background:linear-gradient(135deg,#f6fbf7,#fff);box-shadow:0 12px 34px rgba(13,49,37,.07);animation:welcome-pop .65s cubic-bezier(.2,.8,.2,1) both }
 .welcome-icon { width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border-radius:12px;background:var(--accent);color:#fff;font-size:20px;box-shadow:0 6px 14px #157b6033 }
@@ -76,17 +79,22 @@ body.assistant-page .hero { display:none }
 .landing-input:focus-within { border-color:#83b8a2;box-shadow:0 0 0 4px #116d5b12,0 12px 32px rgba(13,49,37,.09) }
 .landing-input input { min-height:42px;font-size:14px }
 .landing-input .chat-send { width:42px;height:42px;border-radius:50%;font-size:17px }
+.starter-prompts { display:flex;justify-content:center;flex-wrap:wrap;gap:9px;animation:welcome-pop .65s .16s cubic-bezier(.2,.8,.2,1) both }
+.starter-prompt { border:1px solid #e0e9e2;border-radius:999px;background:#fff;color:#5f786a;padding:9px 13px;font-size:11px;font-weight:700;box-shadow:0 4px 12px rgba(13,49,37,.035);transition:transform .18s,border-color .18s,color .18s,box-shadow .18s }
+.starter-prompt:hover { transform:translateY(-2px);border-color:#9fcab2;color:var(--accent);box-shadow:0 7px 16px rgba(13,49,37,.08) }
 .workspace.assistant-layout .conversation-panel { width:100%;height:min(76vh,840px);min-height:420px }
 .workspace.assistant-layout .conversation-panel .chat-box { height:auto;min-height:0;flex:1 }
 @keyframes welcome-pop { from { opacity:0;transform:translateY(14px) scale(.98) } to { opacity:1;transform:translateY(0) scale(1) } }
 @keyframes welcome-text-bob { 0%,50%,100% { transform:translateY(0) } 25% { transform:translateY(-4px) } 75% { transform:translateY(3px) } }
-@media(prefers-reduced-motion:reduce) { .welcome-popover,.welcome-popover > div,.assistant-landing-panel h2 { animation:none } }
+@media(prefers-reduced-motion:reduce) { .welcome-popover,.welcome-popover > div,.assistant-landing-panel h2,.starter-prompts { animation:none }.starter-prompt { transition:none } }
+@media(max-width:810px) { .assistant-landing .main { min-height:calc(100vh - 74px) } }
 @media(max-width:540px) {
     .workspace.assistant-layout .chat-box { height:55vh;min-height:280px }
-    .assistant-landing .workspace.assistant-layout .right-column { min-height:calc(100vh - 145px) }
     .assistant-landing-panel { gap:20px;padding:12px 4px }
     .welcome-popover { padding:16px;border-radius:16px }
     .welcome-popover p { font-size:12px }
+    .starter-prompts { gap:7px }
+    .starter-prompt { padding:8px 11px;font-size:10px }
     .workspace.assistant-layout .conversation-panel { height:70vh;min-height:360px }
 }
 .nav-btn svg { width:17px;height:17px;flex-shrink:0 }
