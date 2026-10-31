@@ -22,11 +22,13 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  assert.throws(()=>validateInput(null),/Invalid message format/);
  assert.throws(()=>validateInput({message:''}),/Message must/);
  assert.throws(()=>validateInput({message:'x'.repeat(2001)}),/Message must/);
- const input=validateInput({message:'  hello  ',history:[{role:'system',text:'filtered'},{role:'user',text:'x'.repeat(1000)}],context:{offers:[null,{store:'Shop',itemPriceSGD:5}]}});
+ const input=validateInput({message:'  hello  ',history:[{role:'system',text:'filtered'},{role:'user',text:'x'.repeat(1000)}],context:{offers:[null,{store:'Shop',itemPriceSGD:5}],promoCodeSearch:true}});
  assert.equal(input.message,'hello');
  assert.deepEqual(input.history,[{role:'user',content:'x'.repeat(850)}]);
  assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
  assert.equal(JSON.parse(input.context).budgetEstimate,false);
+ assert.equal(input.promoCodeSearch,true);
+ assert.equal(JSON.parse(input.context).promoCodeSearch,true);
 });
 
 test('Calls Responses API with web search and displays clickable citations',async()=>{
@@ -93,6 +95,27 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.equal(JSON.parse(contextMessage).budgetEstimate,true);
  assert.equal(payload.input.at(-1).content,shoppingList);
  assert.match(reply,/Estimated listed-price budget: S\$18\.20/);
+});
+
+test('requires live search and cited exact codes for promo-code searches',async()=>{
+ let payload;
+ const reply=await generateReply({
+  message:'Find current promo codes for FairPrice groceries.',
+  context:{promoCodeSearch:true}
+ },env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! No verifiable code was found.',[{title:'Retailer promotions',url:'https://fairprice.example/promotions'}])};
+ });
+ assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tools[0].search_context_size,'medium');
+ assert.match(payload.instructions,/MUST perform a live web search/);
+ assert.match(payload.instructions,/exact code is explicitly shown by a cited source/);
+ assert.match(payload.instructions,/do not claim a code works at checkout/);
+ assert.match(reply,/No verifiable code was found/);
+ assert.match(reply,/\[Retailer promotions\]\(https:\/\/fairprice\.example\/promotions\)/);
+ const noSources=await generateReply({message:'Find codes for FairPrice',context:{promoCodeSearch:true}},env,async()=>({ok:true,status:200,json:async()=>response('Use FAKE20 for 20% off.')}));
+ assert.match(noSources,/No promo codes could be verified/);
+ assert.doesNotMatch(noSources,/FAKE20/);
 });
 
 test('Can require an actual web search for shopping lookups',async()=>{
