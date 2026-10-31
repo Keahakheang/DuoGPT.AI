@@ -103,7 +103,13 @@ body.assistant-page .hero { display:none }
 .promo-answer { margin-top:18px;padding:16px;border:1px solid #e5ece6;border-radius:12px;background:#fff }
 .promo-answer-heading { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px }
 .promo-answer-heading h4 { margin:0;color:#315b49;font-size:13px }
-.promo-answer-body { color:#52695c;font-size:11px;line-height:1.7;overflow-wrap:anywhere }
+.promo-answer-body { color:#52695c;font-size:12px;line-height:1.7;overflow-wrap:anywhere }
+.promo-answer-body p { margin:0 0 12px }
+.promo-answer-body p:last-child { margin-bottom:0 }
+.promo-result-list { display:grid;gap:10px;margin:10px 0 14px;padding:0;list-style:none }
+.promo-result-list li { position:relative;padding:11px 13px 11px 34px;border:1px solid #e8eee9;border-radius:10px;background:#fbfdfb }
+.promo-result-list li::before { content:"";position:absolute;left:15px;top:17px;width:7px;height:7px;border-radius:50%;background:#32a078;box-shadow:0 0 0 4px #e6f4eb }
+.promo-code-token { display:inline-block;padding:2px 7px;border:1px dashed #b6d2c0;border-radius:5px;background:#eff7f0;color:#245b46;font-size:.95em;font-weight:800;letter-spacing:.03em }
 .promo-answer-body a { color:var(--accent);font-weight:750;text-decoration:underline;text-underline-offset:2px }
 @keyframes promo-spin { to { transform:rotate(360deg) } }
 @keyframes welcome-pop { from { opacity:0;transform:translateY(14px) scale(.98) } to { opacity:1;transform:translateY(0) scale(1) } }
