@@ -27,6 +27,7 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  assert.deepEqual(input.history,[{role:'user',content:'x'.repeat(850)}]);
  assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
  assert.equal(JSON.parse(input.context).budgetEstimate,false);
+ assert.equal(JSON.parse(input.context).budgetEstimateFromSearch,undefined);
  assert.equal(input.promoCodeSearch,true);
  assert.equal(JSON.parse(input.context).promoCodeSearch,true);
 });
@@ -82,6 +83,7 @@ test('requires a live search and price-grounded budget for a typed shopping list
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! Estimated listed-price budget: S$18.20. Pork and broccoli prices are approximate.')};
  });
+
  assert.equal(payload.tool_choice,'required');
  assert.equal(payload.tools[0].search_context_size,'low');
  assert.equal(payload.max_output_tokens,1800);
@@ -95,6 +97,33 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.equal(JSON.parse(contextMessage).budgetEstimate,true);
  assert.equal(payload.input.at(-1).content,shoppingList);
  assert.match(reply,/Estimated listed-price budget: S\$18\.20/);
+});
+
+test('AI summarizes completed note product searches without starting a second web search',async()=>{
+ let payload;
+ const reply=await generateReply({
+  message:'Requested items: rice 5kg; milk 2L. The arithmetic subtotal is S$11.50.',
+  context:{
+   budgetEstimateFromSearch:true,
+   requestedItems:['rice 5kg','milk 2L'],
+   unavailableItems:[],
+   failedItems:[],
+   subtotalSGD:11.5,
+   offers:[
+    {requestedItem:'rice 5kg',store:'FairPrice',title:'Rice 5kg',itemPriceSGD:5.5,sourceUrl:'https://fairprice.example/rice',requestedQuantity:5000,requestedUnit:'g',packQuantity:5000,packUnit:'g',packCount:1,quantityVerified:true,lineTotalSGD:5.5},
+    {requestedItem:'milk 2L',store:'FairPrice',title:'Milk 2L',itemPriceSGD:3,sourceUrl:'https://fairprice.example/milk',requestedQuantity:2000,requestedUnit:'ml',packQuantity:1000,packUnit:'ml',packCount:2,quantityVerified:true,lineTotalSGD:6}
+   ]
+  }
+ },env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! Estimated listed-price budget: S$11.50.')};
+ });
+ assert.deepEqual(payload.tools,[]);
+ assert.equal(payload.tool_choice,'none');
+ assert.match(payload.instructions,/Do not perform or claim to perform another web search/);
+ assert.match(payload.input[0].content,/rice 5kg/);
+ assert.match(payload.input[0].content,/packCount/);
+ assert.match(reply,/Estimated listed-price budget: S\$11\.50/);
 });
 
 test('requires live search and cited exact codes for promo-code searches',async()=>{

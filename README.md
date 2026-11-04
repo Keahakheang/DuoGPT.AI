@@ -14,11 +14,11 @@ Set these as server-side environment variables:
 - `SEARCH_ACCESS_CODE` — optional shared code to limit public search usage
 - `CHAT_ACCESS_CODE` — optional shared code to limit AI chat
 
-Keys are sent only from the server. Never put them in browser code or commit them to GitHub. On Netlify, set the variables in **Project configuration → Environment variables** and redeploy.
+Keys are sent only from the server. Never put them in browser code or commit them to GitHub. On Vercel, add the variables in **Project Settings → Environment Variables** and redeploy. The Vercel API routes are in `api/`; `vercel.json` serves the frontend from `public/`.
 
 Check `/api/status` for `shoppingConfigured:true`, then search a product. The status endpoint confirms only that required settings are present; it does not verify the provider's key, model, or web-search access. If the provider rejects the Responses API or `web_search` tool, check its documentation and model permissions.
 
-AI chat web searches can take up to two minutes before timing out. Saved-note budget searches use the product-listing search separately for each item (up to eight at once), then total the returned listed prices. Dedicated product-listing searches use a one-minute timeout.
+AI chat web searches can take up to two minutes before timing out. Saved-note budget searches require a fresh product web search for each item (up to eight at once), match the requested quantity to verified pack sizes when available, and ask the AI chat to summarize the results without repeating the web search. Normal product searches keep their existing automatic web-search mode. Dedicated product-listing searches use a one-minute timeout.
 
 ## Local development
 

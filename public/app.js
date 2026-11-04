@@ -140,6 +140,50 @@ function parseBudgetItems(note){
  }).filter(Boolean);
  return {items,storeHint};
 }
+function parseBudgetQuantity(value){
+ const text=String(value||'').replace(/,/g,'');
+ let match=text.match(/(\d+(?:\.\d+)?)\s*(kg|g|mg|ml|l|lit(?:er|re)s?|eggs?|pcs?|pieces?)\b/i);
+ if(!match){
+  const count=text.match(/\b(eggs?)\s*(?:x|pack of)?\s*(\d+(?:\.\d+)?)/i);
+  if(count)match=[count[0],count[2],count[1]];
+ }
+ if(!match)return null;
+ const amount=Number(match[1]),unit=match[2].toLowerCase();
+ const kind=/^kg$|^g$|^mg$/.test(unit)?'weight':/^ml$|^l$|^lit/.test(unit)?'volume':'count';
+ const factor=unit==='kg'||unit==='l'||unit.startsWith('lit')?1000:unit==='mg'?0.001:1;
+ const normalizedUnit=kind==='weight'?'g':kind==='volume'?'ml':'count';
+ return Number.isFinite(amount)&&amount>0?{amount:amount*factor,unit:normalizedUnit}:null;
+}
+function matchBudgetProduct(item,products,storeHint){
+ const ignored=new Set(['of','the','and','for','from','buy','at','in','singapore','fairprice','ntuc','shopee','lazada','redmart','amazon','cold','storage','pcs','pieces']);
+ const tokens=value=>(String(value||'').toLowerCase().match(/[a-z]+/g)||[]).filter(token=>!ignored.has(token));
+ const productName=value=>String(value||'')
+  .replace(/\d+(?:[.,]\d+)?\s*(?:kg|g|mg|ml|l|lit(?:er|re)s?)\b/gi,' ')
+  .replace(/\d+(?:[.,]\d+)?\s*(eggs?)\b/gi,' $1')
+  .replace(/\b(eggs?)\s*(?:x|pack of)?\s*\d+(?:[.,]\d+)?/gi,' $1');
+ const requested=tokens(productName(item));
+ const target=new Set(requested);
+ const quantity=parseBudgetQuantity(item);
+ const requestedStore=String(storeHint||'').toLowerCase().replace(/[^a-z]/g,'');
+ const candidates=(Array.isArray(products)?products:[]).filter(product=>
+  product&&Number.isFinite(product.price)&&product.price>0&&safeTableUrl(product.url)
+ ).map(product=>{
+  const productTokens=tokens(productName(product.title));
+  const overlap=requested.filter(token=>productTokens.includes(token)).length;
+  const coverage=target.size?overlap/target.size:1;
+  const retailer=String(product.merchant||'').toLowerCase().replace(/[^a-z]/g,'');
+  const storeMatch=!!requestedStore&&retailer.includes(requestedStore);
+  const packQuantity=parseBudgetQuantity(product.title);
+  let packCount=1,quantityVerified=!quantity;
+  if(quantity&&packQuantity&&quantity.unit===packQuantity.unit){
+   packCount=Math.ceil(quantity.amount/packQuantity.amount);
+   quantityVerified=true;
+  }
+  return {product,coverage,storeMatch,packQuantity,packCount,quantityVerified};
+ }).filter(candidate=>requested.length===0||candidate.coverage>=0.5)
+  .sort((a,b)=>(b.coverage-a.coverage)||(Number(b.quantityVerified)-Number(a.quantityVerified))||(Number(b.storeMatch)-Number(a.storeMatch))||(a.product.price*a.packCount-b.product.price*b.packCount));
+ return candidates[0]||null;
+}
 async function estimateBudget(note){
  const {items,storeHint}=parseBudgetItems(note);
  if(!items.length)throw new Error('Add grocery items on separate lines, using a bullet or a quantity such as “milk 2L”.');
@@ -149,34 +193,64 @@ async function estimateBudget(note){
  const results=await Promise.all(items.map(async item=>{
   const query=[item,storeHint,'Singapore'].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
   if(query.length>90)throw new Error(`“${item}” is too long to search. Shorten that line and try again.`);
-  const response=await apiFetch('/api/search?q='+encodeURIComponent(query),{headers,signal:AbortSignal.timeout(70000)});
+  const response=await apiFetch('/api/search?q='+encodeURIComponent(query)+'&requireSearch=1',{headers,signal:AbortSignal.timeout(70000)});
   const data=await response.json();
   if(!response.ok){
    if(response.status===401){state.searchCode='';sessionStorage.removeItem('sw-search-code')}
    throw new Error(data.error||`Product lookup failed for “${item}”.`);
   }
-  const product=Array.isArray(data.products)?data.products.find(candidate=>Number.isFinite(candidate.price)&&candidate.price>0&&safeTableUrl(candidate.url)):null;
-  return {item,product};
- }).map(promise=>promise.catch(error=>({item,error}))));
+  const match=matchBudgetProduct(item,data.products,storeHint);
+  return {item,...(match||{product:null})};
+ }).map((promise,index)=>promise.catch(error=>({item:items[index],error}))));
  const errors=results.filter(result=>result.error);
  if(errors.length===items.length)throw new Error(errors[0].error.message||'Product lookup failed. Try again.');
  const matches=results.filter(result=>result.product);
- const total=matches.reduce((sum,result)=>sum+result.product.price,0);
- const clean=value=>String(value||'').replace(/[|\[\]\r\n]/g,' ').replace(/\s+/g,' ').trim();
- const rows=matches.map(({item,product})=>{
-  const title=clean(product.title),url=safeTableUrl(product.url);
-  return `| ${clean(item)} | [${title}](${url.replace(/[)|]/g,char=>encodeURIComponent(char))}) | ${clean(product.merchant)} | ${money(product.price)} | + Add to shopping list |`;
- });
- let reply='Hello! Sourced product matches for your note:\n\n';
- if(rows.length){
-  reply+='| Requested quantity | Product | Retailer | Listed price (SGD) | Shopping list |\n| --- | --- | --- | ---: | --- |\n'+rows.join('\n');
-  reply+=`\n\nEstimated listed-price budget: ${money(total)} for one matched pack per listed item.`;
- }else reply+='No cited product listings with prices were found for these items.';
+ const budgetable=matches.filter(result=>result.quantityVerified);
+ const subtotal=Math.round(budgetable.reduce((sum,result)=>sum+result.product.price*result.packCount,0)*100)/100;
  const unavailable=results.filter(result=>!result.error&&!result.product).map(result=>result.item);
- if(unavailable.length)reply+=`\n\nNo verified priced listing found for: ${unavailable.map(clean).join(', ')}. These are not included in the subtotal.`;
- if(errors.length)reply+=`\n\nSome lookups failed: ${errors.map(result=>clean(result.item)).join(', ')}. Try those items again.`;
- reply+='\n\nListings may not match the exact requested pack size. Check the retailer page; delivery, stock, and checkout prices are not included.';
- return reply;
+ const offers=matches.map(({item,product,packCount,packQuantity,quantityVerified})=>({
+  requestedItem:item,
+  title:product.title,
+  store:product.merchant,
+  itemPriceSGD:product.price,
+  sourceUrl:product.url,
+  requestedQuantity:parseBudgetQuantity(item)?.amount||null,
+  requestedUnit:parseBudgetQuantity(item)?.unit||'',
+  packQuantity:packQuantity?.amount||null,
+  packUnit:packQuantity?.unit||'',
+  packCount,
+  quantityVerified,
+  lineTotalSGD:quantityVerified?Math.round(product.price*packCount*100)/100:null
+ }));
+ const uncertainQuantities=matches.filter(result=>!result.quantityVerified).map(result=>result.item);
+ const message=[
+  'Prepare the final AI response for this saved shopping note using only the completed product-search results in context.',
+  `Requested items: ${items.join('; ')}`,
+  unavailable.length?`No priced product listing was found for: ${unavailable.join('; ')}`:'',
+  errors.length?`The product lookup failed for: ${errors.map(result=>result.item).join('; ')}`:'',
+  uncertainQuantities.length?`Pack size could not be verified against requested quantity for: ${uncertainQuantities.join('; ')}`:'',
+  `The arithmetic subtotal for the matched products is S$${subtotal.toFixed(2)}.`
+ ].filter(Boolean).join('\n');
+ const response=await apiFetch('/api/chat',{
+  method:'POST',
+  headers:{'Content-Type':'application/json',...(state.chatCode?{'X-Shopwise-Code':state.chatCode}:{})},
+  body:JSON.stringify({message,context:{
+   budgetEstimateFromSearch:true,
+   requestedItems:items,
+   unavailableItems:unavailable,
+   failedItems:errors.map(result=>result.item),
+   uncertainQuantityItems:uncertainQuantities,
+   subtotalSGD:subtotal,
+   offers
+  }}),
+  signal:AbortSignal.timeout(130000)
+ });
+ const data=await response.json();
+ if(!response.ok){
+  if(response.status===401){state.chatCode='';sessionStorage.removeItem('sw-chat-code')}
+  throw new Error(data.error||'The AI could not prepare the budget summary.');
+ }
+ return data.reply||'The AI returned no budget summary. Please try again.';
 }
 async function chat(msg,{budgetEstimate=false,showUserMessage=true}={}){
  msg=String(msg||'').trim();if(!msg||state.chatPending)return;if(budgetEstimate&&msg.length>2000){toast('Shorten this note to 2,000 characters before sending it to the assistant');return}if(showUserMessage)addFirstUserMessage(msg);if(!budgetEstimate&&/\b(cheap|lowest|best price)\b/i.test(msg)&&state.results.length){addChat('assistant',cheapestText());return}if(!budgetEstimate&&/\b(compare|summary|results|deals?)\b/i.test(msg)&&state.results.length){addChat('assistant',summaryText());return}if(!state.aiConfigured){addChat('assistant','AI chat and live search are not connected. Configure AI_BASE_URL, AI_API_KEY, and AI_MODEL on the server.',true);return}if(!accessCode('chat'))return;
