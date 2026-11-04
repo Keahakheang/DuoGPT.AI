@@ -2,7 +2,7 @@
 
 Shopwise uses an OpenAI-compatible provider's **Responses API web search tool** for live product searches and AI answers. The provider and selected model must have web search enabled. Product titles and listed prices are extracted from cited web results; coverage and price accuracy vary, and users should verify the exact item and final checkout total with the retailer. Shopwise does not connect to retailer accounts or add items to retailer carts.
 
-Saved notes and the shopping list stay in the local browser. From a note, users can ask Shopwise to search current Singapore product listings and estimate a budget using cited SGD prices; unverified items are excluded from the estimate.
+Saved notes and the shopping list stay in the local browser. Clicking **Find products & estimate budget** sends the full note to the AI chat. The AI interprets the note, searches current Singapore listings and estimates a budget when the note asks for shopping help; other questions receive a normal answer. Prices and product claims must be supported by citations.
 
 ## Configure the provider
 
@@ -14,11 +14,11 @@ Set these as server-side environment variables:
 - `SEARCH_ACCESS_CODE` — optional shared code to limit public search usage
 - `CHAT_ACCESS_CODE` — optional shared code to limit AI chat
 
-Keys are sent only from the server. Never put them in browser code or commit them to GitHub. On Netlify, set the variables in **Project configuration → Environment variables** and redeploy.
+Keys are sent only from the server. Never put them in browser code or commit them to GitHub. On Netlify, set the variables in **Project configuration → Environment variables**; on Vercel, set them in **Project Settings → Environment Variables**. Redeploy after changing variables.
 
 Check `/api/status` for `shoppingConfigured:true`, then search a product. The status endpoint confirms only that required settings are present; it does not verify the provider's key, model, or web-search access. If the provider rejects the Responses API or `web_search` tool, check its documentation and model permissions.
 
-AI chat web searches can take up to two minutes before timing out. Saved-note budget searches use the product-listing search separately for each item (up to eight at once), then total the returned listed prices. Dedicated product-listing searches use a one-minute timeout.
+AI chat web searches can take up to two minutes before timing out. Saved-note requests that ask for shopping help require a live web search; general questions are answered normally. Vercel deployments use the `/api` functions in this repository, while Netlify deployments use the configured Netlify Functions.
 
 ## Local development
 

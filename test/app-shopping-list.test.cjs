@@ -12,18 +12,9 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
- const budgetSearches=[];
+ const chatRequests=[];
  const fetch=async(url,options)=>{
-  if(url.startsWith('/api/search?q=')){
-   const query=decodeURIComponent(url.slice('/api/search?q='.length));
-   budgetSearches.push(query);
-   const product=query.includes('pork')
-    ?{title:'Pork 300g',merchant:'FairPrice',price:5.8,url:'https://www.fairprice.com.sg/product/pork'}
-    :query.includes('broccoli')
-    ?{title:'Broccoli 200g',merchant:'FairPrice',price:3.2,url:'https://www.fairprice.com.sg/product/broccoli'}
-    :{title:'Milk 1L',merchant:'FairPrice',price:9.2,url:'https://www.fairprice.com.sg/product/milk'};
-   return {ok:true,json:async()=>({products:[product]})};
-  }
+  if(url==='/api/chat'){chatRequests.push(JSON.parse(options.body));return {ok:true,json:async()=>({reply:'Hello! I can help plan this meal and find groceries.'})}}
   return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
  };
  const fixtureText=[
@@ -35,8 +26,6 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  ].join('\n');
  const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
- const parsedBudget=JSON.parse(vm.runInContext("JSON.stringify(parseBudgetItems('buy from fairprice\\n- 10eggs\\n- meat: 500g\\n- rice 5kg\\n- milk 2L'))",context));
- assert.deepEqual(parsedBudget,{items:['10 eggs','meat 500g','rice 5kg','milk 2L'],storeHint:'fairprice'});
  context.fixtureText=fixtureText;
  vm.runInContext("state.results=[];state.chats=[{role:'assistant',text:fixtureText}];renderRight()",context);
  assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,3);
@@ -69,38 +58,22 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.ok(elements.get('center').innerHTML.includes('<h4 class="personal-note-title">Weekly groceries</h4>'));
  assert.match(elements.get('center').innerHTML,/aria-label="Note actions"/);
  assert.match(elements.get('center').innerHTML,/data-action="note-products" data-id=/);
- assert.ok(!elements.get('center').innerHTML.includes('Find products &amp; estimate budget</button></div></div></form>'));
+ assert.ok(elements.get('center').innerHTML.includes('Find products &amp; estimate budget'));
  const noteId=JSON.parse(stored['shopwise-live-v1']).notes[0].id;
  vm.runInContext('state.aiConfigured=true',context);
  handlers.click({target:{closest:()=>({dataset:{action:'note-products',id:noteId},closest:()=>({removeAttribute(){}})})}});
  const noteText=JSON.parse(stored['shopwise-live-v1']).notes[0].text;
  assert.equal(noteText,JSON.parse(stored['shopwise-live-v1']).notes[0].text);
- assert.ok(elements.get('right').innerHTML.includes('Finding product matches and estimating your budget…'));
- assert.ok(!elements.get('right').innerHTML.includes(noteText));
- assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user")',context),false);
+ assert.ok(elements.get('right').innerHTML.includes('Researching your note…'));
+ assert.ok(elements.get('right').innerHTML.includes('this week cooking'));
+ assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user"&&message.text===JSON.parse(localStorage.getItem("shopwise-live-v1")).notes[0].text)',context),true);
  await new Promise(resolve=>setTimeout(resolve,0));
- assert.deepEqual(budgetSearches.sort(),['broccoli 200g Singapore','milk 500ml Singapore','pork 200g Singapore']);
- assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,6);
- assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20 for one matched pack per listed item.'));
- assert.ok(elements.get('right').innerHTML.includes('Pork 300g'));
+ assert.equal(chatRequests.length,1);
+ assert.equal(chatRequests[0].message,noteText);
+ assert.equal(chatRequests[0].context.savedNoteRequest,true);
+ assert.ok(elements.get('right').innerHTML.includes('I can help plan this meal and find groceries.'));
  assert.ok(!elements.get('right').innerHTML.includes('AI unavailable'));
- assert.ok(!elements.get('right').innerHTML.includes(noteText));
- context.budgetReply=[
-  'Hello!',
-  '',
-  '| Product | Retailer | Listed price (SGD) | Relevant details | Shopping list |',
-  '| --- | --- | ---: | --- | --- |',
-  '| [Pasar Fresh Malaysia Lean Minced Pork 300g](turn0search9) | NTUC FairPrice | S$5.80<br>300g | Pack contains 300g; S$1.93/100g; origin: Malaysia (listed); rating: Not verified | + Add to shopping list |',
-  '',
-  'Estimated listed-price budget: S$5.80.'
- ].join('\n');
- vm.runInContext("state.chats=[{role:'assistant',text:budgetReply}];renderRight()",context);
- const budgetHtml=elements.get('right').innerHTML;
- assert.match(budgetHtml,/<a href="https:\/\/www\.fairprice\.com\.sg\/search\?query=/);
- assert.ok(budgetHtml.includes('>Pasar Fresh Malaysia Lean Minced Pork 300g</a>'));
- assert.ok(budgetHtml.includes('S$5.80<br>300g'));
- assert.ok(budgetHtml.includes('S$1.93/100g'));
- assert.ok(!budgetHtml.includes('turn0search9'));
+ assert.equal(chatRequests[0].context.budgetEstimate,false);
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);
  assert.ok(!elements.get('center').innerHTML.includes('this week cooking'));

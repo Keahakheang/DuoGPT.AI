@@ -22,11 +22,14 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  assert.throws(()=>validateInput(null),/Invalid message format/);
  assert.throws(()=>validateInput({message:''}),/Message must/);
  assert.throws(()=>validateInput({message:'x'.repeat(2001)}),/Message must/);
+ assert.equal(validateInput({message:'x'.repeat(5000),context:{savedNoteRequest:true}}).message.length,5000);
+ assert.throws(()=>validateInput({message:'x'.repeat(5001),context:{savedNoteRequest:true}}),/5,000 characters/);
  const input=validateInput({message:'  hello  ',history:[{role:'system',text:'filtered'},{role:'user',text:'x'.repeat(1000)}],context:{offers:[null,{store:'Shop',itemPriceSGD:5}],promoCodeSearch:true}});
  assert.equal(input.message,'hello');
  assert.deepEqual(input.history,[{role:'user',content:'x'.repeat(850)}]);
  assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
  assert.equal(JSON.parse(input.context).budgetEstimate,false);
+ assert.equal(JSON.parse(input.context).savedNoteRequest,false);
  assert.equal(input.promoCodeSearch,true);
  assert.equal(JSON.parse(input.context).promoCodeSearch,true);
 });
@@ -95,6 +98,31 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.equal(JSON.parse(contextMessage).budgetEstimate,true);
  assert.equal(payload.input.at(-1).content,shoppingList);
  assert.match(reply,/Estimated listed-price budget: S\$18\.20/);
+});
+
+test('saved notes reach the AI as full requests and search for product plans',async()=>{
+ let payload;
+ const note='I want to prepare spaghetti for the weekend. What should I buy and how much might it cost?';
+ await generateReply({message:note,context:{savedNoteRequest:true}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! I will find ingredients and estimate their listed prices.',[{title:'Retailer listing',url:'https://example.com/spaghetti'}])};
+ });
+ assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.input.at(-1).content,note);
+ const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
+ assert.match(payload.instructions,/do not require a bullet list or assume every note is a shopping list/);
+ assert.match(payload.instructions,/estimate costs only from cited SGD prices/);
+});
+
+test('saved notes with general questions are answered without forced shopping-list formatting',async()=>{
+ let payload;
+ await generateReply({message:'How can I organize my week?',context:{savedNoteRequest:true}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! Start with your priorities and block time for them.')};
+ });
+ assert.equal(payload.tool_choice,'auto');
+ assert.match(payload.instructions,/answer it directly instead of forcing a product table or budget/);
 });
 
 test('requires live search and cited exact codes for promo-code searches',async()=>{
