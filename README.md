@@ -18,6 +18,8 @@ Keys are sent only from the server. Never put them in browser code or commit the
 
 Check `/api/status` for `shoppingConfigured:true`, then search a product. The status endpoint confirms only that required settings are present; it does not verify the provider's key, model, or web-search access. If the provider rejects the Responses API or `web_search` tool, check its documentation and model permissions.
 
+AI chat web searches can take up to two minutes before timing out. Dedicated product-listing searches use a shorter one-minute timeout.
+
 ## Local development
 
 Node.js 20.12+ is required. There are no npm dependencies. The local server loads optional `.env.dev` (ignored by Git). Copy `.env.example` to `.env.dev` and add your private settings, or use PowerShell:
