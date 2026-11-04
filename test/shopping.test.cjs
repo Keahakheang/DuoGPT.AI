@@ -94,19 +94,6 @@ test('uses compatible live web search and only returns listings with cited HTTPS
  assert.equal(cached.cached,true);
 });
 
-test('can require fresh web search for saved-note lookups without changing normal search mode',async()=>{
- const choices=[];
- const query='saved note query '+Date.now();
- const fetcher=async(_url,options)=>{
-  const payload=JSON.parse(options.body);
-  choices.push(payload.tool_choice);
-  return {ok:true,status:200,json:async()=>searchResponse};
- };
- await searchShopping(query,env,fetcher,{requireSearch:true});
- await searchShopping(query,env,fetcher);
- assert.deepEqual(choices,['required','auto']);
-});
-
 test('returns up to 16 verified results and keeps product images',async()=>{
  const listings=Array.from({length:20},(_,index)=>({
   title:`Singapore oats ${index+1}`,

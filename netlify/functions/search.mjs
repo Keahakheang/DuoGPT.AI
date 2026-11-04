@@ -8,6 +8,6 @@ export default async function handler(request){
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
  if(request.method!=='GET')return json({error:'Use GET.'},405);
  if(!authorized(process.env.SEARCH_ACCESS_CODE,request.headers.get('x-shopwise-search-code')))return json({error:'Enter the search access code configured by the site owner.',code:'ACCESS_CODE_REQUIRED'},401);
- try{const {searchParams}=new URL(request.url);return json(await searchShopping(searchParams.get('q'),process.env,fetch,{requireSearch:searchParams.get('requireSearch')==='1'}))}
+ try{const {searchParams}=new URL(request.url);return json(await searchShopping(searchParams.get('q')))}
  catch(err){return json({error:err instanceof ShoppingError?err.message:'Shopping search failed.'},err.status||500)}
 }

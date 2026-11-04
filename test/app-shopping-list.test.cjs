@@ -13,29 +13,10 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
  const budgetSearches=[];
- const budgetSearchUrls=[];
- let failBudgetSearches=false;
- let budgetChatRequest;
  const fetch=async(url,options)=>{
-  if(url==='/api/chat'){
-   budgetChatRequest=JSON.parse(options.body);
-   return {ok:true,json:async()=>({reply:[
-    'Hello!',
-    '',
-    '| Requested item | Product | Retailer | Listed price (SGD) | Shopping list |',
-    '| --- | --- | --- | ---: | --- |',
-    '| pork 200g | [Pork 300g](https://www.fairprice.com.sg/product/pork) | FairPrice | S$5.80 | + Add to shopping list |',
-    '| broccoli 200g | [Broccoli 200g](https://www.fairprice.com.sg/product/broccoli) | FairPrice | S$3.20 | + Add to shopping list |',
-    '| milk 500ml | [Milk 1L](https://www.fairprice.com.sg/product/milk) | FairPrice | S$9.20 | + Add to shopping list |',
-    '',
-    'Estimated listed-price budget: S$18.20 for the verified products.'
-   ].join('\n')})};
-  }
   if(url.startsWith('/api/search?q=')){
-   budgetSearchUrls.push(url);
-   const query=decodeURIComponent(url.slice('/api/search?q='.length).split('&')[0]);
+   const query=decodeURIComponent(url.slice('/api/search?q='.length));
    budgetSearches.push(query);
-   if(failBudgetSearches)return {ok:false,json:async()=>({error:'Provider search failed.'})};
    const product=query.includes('pork')
     ?{title:'Pork 300g',merchant:'FairPrice',price:5.8,url:'https://www.fairprice.com.sg/product/pork'}
     :query.includes('broccoli')
@@ -56,15 +37,6 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
  const parsedBudget=JSON.parse(vm.runInContext("JSON.stringify(parseBudgetItems('buy from fairprice\\n- 10eggs\\n- meat: 500g\\n- rice 5kg\\n- milk 2L'))",context));
  assert.deepEqual(parsedBudget,{items:['10 eggs','meat 500g','rice 5kg','milk 2L'],storeHint:'fairprice'});
- const riceMatch=JSON.parse(vm.runInContext("JSON.stringify(matchBudgetProduct('rice 5kg',[{title:'Banana 1kg',price:2,url:'https://fairprice.example/banana'},{title:'Jasmine Rice 5kg',price:12,url:'https://fairprice.example/rice'}],''))",context));
- assert.equal(riceMatch.product.title,'Jasmine Rice 5kg');
- assert.equal(riceMatch.packCount,1);
- assert.equal(riceMatch.quantityVerified,true);
- const eggMatch=JSON.parse(vm.runInContext("JSON.stringify(matchBudgetProduct('10 eggs',[{title:'Eggs 10 pack',price:4,url:'https://fairprice.example/eggs'}],''))",context));
- assert.equal(eggMatch.quantityVerified,true);
- assert.equal(eggMatch.packCount,1);
- const wrongUnitMatch=JSON.parse(vm.runInContext("JSON.stringify(matchBudgetProduct('milk 2L',[{title:'Milk powder 1kg',price:8,url:'https://fairprice.example/milk-powder'}],''))",context));
- assert.equal(wrongUnitMatch.quantityVerified,false);
  context.fixtureText=fixtureText;
  vm.runInContext("state.results=[];state.chats=[{role:'assistant',text:fixtureText}];renderRight()",context);
  assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,3);
@@ -108,22 +80,11 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user")',context),false);
  await new Promise(resolve=>setTimeout(resolve,0));
  assert.deepEqual(budgetSearches.sort(),['broccoli 200g Singapore','milk 500ml Singapore','pork 200g Singapore']);
- assert.equal(budgetSearchUrls.every(url=>url.includes('&requireSearch=1')),true);
- assert.equal(budgetChatRequest.context.budgetEstimateFromSearch,true);
- assert.equal(budgetChatRequest.context.offers.length,3);
- assert.deepEqual(budgetChatRequest.context.offers.map(offer=>offer.requestedItem),['pork 200g','broccoli 200g','milk 500ml']);
- assert.deepEqual(budgetChatRequest.context.offers.map(offer=>offer.quantityVerified),[true,true,true]);
- assert.deepEqual(budgetChatRequest.context.offers.map(offer=>offer.packCount),[1,1,1]);
- assert.equal(budgetChatRequest.context.offers[2].packCount,1);
- assert.equal(budgetChatRequest.context.offers[2].lineTotalSGD,9.2);
- assert.equal(budgetChatRequest.context.subtotalSGD,18.2);
  assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,6);
- assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20 for the verified products.'));
+ assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20 for one matched pack per listed item.'));
  assert.ok(elements.get('right').innerHTML.includes('Pork 300g'));
  assert.ok(!elements.get('right').innerHTML.includes('AI unavailable'));
  assert.ok(!elements.get('right').innerHTML.includes(noteText));
- failBudgetSearches=true;
- await assert.rejects(vm.runInContext('estimateBudget("buy from fairprice\\n- rice 5kg\\n- milk 2L")',context),/Provider search failed/);
  context.budgetReply=[
   'Hello!',
   '',

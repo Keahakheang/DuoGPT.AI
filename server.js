@@ -16,7 +16,7 @@ async function route(req,res){const u=new URL(req.url,'http://localhost');
  if(req.method==='GET'&&u.pathname==='/api/status'){const aiStatus=getAIStatus();return send(res,200,{...aiStatus,shoppingConfigured:aiStatus.aiConfigured,shoppingRequiresCode:!!process.env.SEARCH_ACCESS_CODE,requiresCode:!!process.env.CHAT_ACCESS_CODE,liveRetailersConnected:false})}
  if(req.method==='GET'&&u.pathname==='/api/search'){
   if(!authorized(process.env.SEARCH_ACCESS_CODE,req.headers['x-shopwise-search-code']))return send(res,401,{error:'Enter your search access code.'});
-  try{return send(res,200,await searchShopping(u.searchParams.get('q'),process.env,fetch,{requireSearch:u.searchParams.get('requireSearch')==='1'}))}catch(err){return send(res,err.status||500,{error:err instanceof ShoppingError?err.message:'Search error'})}
+  try{return send(res,200,await searchShopping(u.searchParams.get('q')))}catch(err){return send(res,err.status||500,{error:err instanceof ShoppingError?err.message:'Search error'})}
  }
  if(req.method==='POST'&&u.pathname==='/api/chat'){
   if(!verifyAccess(process.env.CHAT_ACCESS_CODE,req.headers['x-shopwise-code']))return send(res,401,{error:'Enter your chat access code.'});
