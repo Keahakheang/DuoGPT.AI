@@ -20,8 +20,8 @@ test('Promo codes page searches online and displays the cited AI answer',async()
   if(url==='/api/status')return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
   request=JSON.parse(options.body);
   const codes=request.message.includes('headphones')
-   ?['Hello! Current codes:','- **Shopee — `AUDIO10`** — 10% off.']
-   :['Hello! Current Singapore-relevant codes found:','- **JBL — `JBL15`** — 15% off storewide; validity not confirmed.','- **iShopChangi — `MOCT10`** — S$10 off with minimum spend; expires today.','','Sources:','- [Retailer promotions](https://retailer.example/promotions)'];
+   ?['Hello! Current codes:','- **Shopee — `AUDIO10`** — 10% off. [View source](https://shopee.example/promotions)']
+   :['Hello! Current Singapore-relevant codes found:','- **Sony Singapore — `SONY10`** — 10% off selected products; Not confirmed by source. [View source](https://sony.example/promotions)','','Sources:','- [Sony Singapore promotions](https://sony.example/promotions)'];
   return {ok:true,json:async()=>({reply:codes.join('\n')})};
  };
  const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
@@ -34,15 +34,14 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.match(page,/Find a promo code/);
  assert.doesNotMatch(page,/Observed reductions|Retailer connections/);
 
- getElementById('promo-query').value='FairPrice groceries';
+ getElementById('promo-query').value='Sony promocode';
  handlers.submit({target:{id:'promo-form'},preventDefault(){}});
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(request.context.promoCodeSearch,true);
- assert.match(request.message,/FairPrice groceries/);
+ assert.match(request.message,/Sony promocode/);
  assert.match(getElementById('center').innerHTML,/class="promo-result-list"/);
- assert.match(getElementById('center').innerHTML,/<li><strong>JBL — <code class="promo-code-token">JBL15<\/code><\/strong> — 15% off storewide; validity not confirmed\.<\/li>/);
- assert.match(getElementById('center').innerHTML,/<li><strong>iShopChangi — <code class="promo-code-token">MOCT10<\/code><\/strong> — S\$10 off with minimum spend; expires today\.<\/li>/);
- assert.match(getElementById('center').innerHTML,/<a href="https:\/\/retailer\.example\/promotions"/);
+ assert.match(getElementById('center').innerHTML,/<li><strong>Sony Singapore — <code class="promo-code-token">SONY10<\/code><\/strong> — 10% off selected products; Not confirmed by source\. <a href="https:\/\/sony\.example\/promotions" target="_blank" rel="noopener noreferrer">View source<\/a><\/li>/);
+ assert.match(getElementById('center').innerHTML,/<a href="https:\/\/sony\.example\/promotions" target="_blank" rel="noopener noreferrer">Sony Singapore promotions<\/a>/);
  handlers.click({target:{closest:()=>({dataset:{action:'promo-save'}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos.length,1);
  assert.match(getElementById('center').innerHTML,/Saved promo codes/);
@@ -53,9 +52,8 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  await new Promise(resolve=>setImmediate(resolve));
  const updatedPage=getElementById('center').innerHTML;
  assert.match(updatedPage,/AUDIO10/);
- assert.match(updatedPage,/JBL15/);
- assert.match(updatedPage,/MOCT10/);
- assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].query,'FairPrice groceries');
+ assert.match(updatedPage,/SONY10/);
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].query,'Sony promocode');
 });
 
 test('Promo answer renderer separates inline retailer-code entries into list items',()=>{
@@ -69,8 +67,9 @@ test('Promo answer renderer separates inline retailer-code entries into list ite
  const document={body:{classList:{toggle(){}}},getElementById,addEventListener(){}};
  const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch:async()=>({ok:true,json:async()=>({})}),setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
- const rendered=vm.runInContext(`renderPromoAnswer("Hello! Codes found: - **JBL — \`JBL15\`** — 15% off - **iShopChangi — \`MOCT10\`** — S$10 off")`,context);
+ const rendered=vm.runInContext(`renderPromoAnswer("Hello! Codes found: - **JBL — \`JBL15\`** — 15% off [View source](https://example.com/promo) - **iShopChangi — \`MOCT10\`** — S$10 off")`,context);
  assert.equal((rendered.match(/<li>/g)||[]).length,2);
  assert.match(rendered,/<code class="promo-code-token">JBL15<\/code>/);
  assert.match(rendered,/<code class="promo-code-token">MOCT10<\/code>/);
+ assert.match(rendered,/<a href="https:\/\/example\.com\/promo"/);
 });

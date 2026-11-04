@@ -99,23 +99,49 @@ test('requires a live search and price-grounded budget for a typed shopping list
 
 test('requires live search and cited exact codes for promo-code searches',async()=>{
  let payload;
+ const source={title:'Sony Singapore promotions',url:'https://www.sony.com.sg/promotions'};
  const reply=await generateReply({
-  message:'Find current promo codes for FairPrice groceries.',
+  message:'Find current promo codes for Sony.',
   context:{promoCodeSearch:true}
  },env,async(_url,options)=>{
   payload=JSON.parse(options.body);
-  return {ok:true,status:200,json:async()=>response('Hello! No verifiable code was found.',[{title:'Retailer promotions',url:'https://fairprice.example/promotions'}])};
+  return {ok:true,status:200,json:async()=>response('Hello! '+JSON.stringify({codes:[{
+   retailer:'Sony Singapore',
+   code:'SONY10',
+   discount:'10% off',
+   terms:'Selected products',
+   validity:'unconfirmed',
+   sourceUrl:source.url
+  }]}),[source])};
  });
  assert.equal(payload.tool_choice,'required');
- assert.equal(payload.tools[0].search_context_size,'medium');
- assert.match(payload.instructions,/MUST perform a live web search/);
- assert.match(payload.instructions,/exact code is explicitly shown by a cited source/);
- assert.match(payload.instructions,/do not claim a code works at checkout/);
- assert.match(reply,/No verifiable code was found/);
- assert.match(reply,/\[Retailer promotions\]\(https:\/\/fairprice\.example\/promotions\)/);
- const noSources=await generateReply({message:'Find codes for FairPrice',context:{promoCodeSearch:true}},env,async()=>({ok:true,status:200,json:async()=>response('Use FAKE20 for 20% off.')}));
- assert.match(noSources,/No promo codes could be verified/);
- assert.doesNotMatch(noSources,/FAKE20/);
+ assert.equal(payload.tools[0].search_context_size,'low');
+ assert.equal(payload.max_output_tokens,800);
+ assert.match(payload.instructions,/Perform one live web search/);
+ assert.match(payload.instructions,/source page that explicitly shows this exact code/);
+ assert.match(payload.instructions,/sourceUrl.*exact HTTPS URL/s);
+ assert.match(payload.instructions,/override the standard greeting rule/);
+ assert.match(reply,/\*\*Sony Singapore — `SONY10`\*\*/);
+ assert.match(reply,/\[View source\]\(https:\/\/www\.sony\.com\.sg\/promotions\)/);
+ assert.match(reply,/Not confirmed by source/);
+ assert.match(reply,/\[Sony Singapore promotions\]\(https:\/\/www\.sony\.com\.sg\/promotions\)/);
+
+ const uncitedCode=await generateReply({
+  message:'Find codes for Sony',
+  context:{promoCodeSearch:true}
+ },env,async()=>({ok:true,status:200,json:async()=>response(JSON.stringify({codes:[{
+  retailer:'Sony',
+  code:'FAKE20',
+  discount:'20% off',
+  terms:'',
+  validity:'confirmed',
+  sourceUrl:'https://example.com/fake'
+ }]}),[{title:'Sony home page',url:'https://www.sony.com.sg/'}])}));
+ assert.match(uncitedCode,/No exact promo codes could be verified/);
+ assert.doesNotMatch(uncitedCode,/FAKE20/);
+
+ const noSources=await generateReply({message:'Find codes for Sony',context:{promoCodeSearch:true}},env,async()=>({ok:true,status:200,json:async()=>response(JSON.stringify({codes:[]}))}));
+ assert.match(noSources,/No exact promo codes could be verified/);
 });
 
 test('Can require an actual web search for shopping lookups',async()=>{
@@ -157,6 +183,7 @@ test('Maps provider errors and unreadable responses clearly',async()=>{
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:400})),/Responses API web-search request/);
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:true,json:async()=>({output:[]})})),/did not return an answer/);
  await assert.rejects(requestWebResponse('hello',env,async()=>{throw Object.assign(new Error('timeout'),{name:'TimeoutError'})},{requireSearch:true}),/required AI web search took too long/);
+ await assert.rejects(requestWebResponse('Find a Sony promo code',env,async()=>{throw Object.assign(new Error('timeout'),{name:'TimeoutError'})},{requireSearch:true,timeoutMessage:'Promo-code web search timed out.'}),/Promo-code web search timed out/);
 });
 
 test('Ignores unsafe citation URLs',async()=>{
