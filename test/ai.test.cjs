@@ -150,7 +150,8 @@ test('Rejects insecure provider URLs before making a request',async()=>{
 });
 
 test('Maps provider errors and unreadable responses clearly',async()=>{
- await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:401})),/rejected AI_API_KEY/);
+ await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:401})),/key is active and belongs to AI_BASE_URL/);
+ await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:403})),/AI_MODEL and its web-search permissions/);
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:429})),/usage limit/);
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:false,status:400})),/Responses API web-search request/);
  await assert.rejects(requestWebResponse('hello',env,async()=>({ok:true,json:async()=>({output:[]})})),/did not return an answer/);
