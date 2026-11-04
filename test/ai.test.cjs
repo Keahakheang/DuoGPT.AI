@@ -27,8 +27,11 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  assert.deepEqual(input.history,[{role:'user',content:'x'.repeat(850)}]);
  assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
  assert.equal(JSON.parse(input.context).budgetEstimate,false);
+ assert.equal(JSON.parse(input.context).savedNoteRequest,false);
  assert.equal(input.promoCodeSearch,true);
  assert.equal(JSON.parse(input.context).promoCodeSearch,true);
+ assert.equal(validateInput({message:'x'.repeat(5000),context:{savedNoteRequest:true}}).message.length,5000);
+ assert.throws(()=>validateInput({message:'x'.repeat(5001),context:{savedNoteRequest:true}}),/5,000 characters/);
 });
 
 test('Calls Responses API with web search and displays clickable citations',async()=>{
@@ -97,51 +100,58 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.match(reply,/Estimated listed-price budget: S\$18\.20/);
 });
 
-test('requires live search and cited exact codes for promo-code searches',async()=>{
+test('saved-note requests send the complete note to AI for context-aware answers',async()=>{
  let payload;
- const source={title:'Sony Singapore promotions',url:'https://www.sony.com.sg/promotions'};
+ const note='I want to cook spaghetti this weekend for lunch and dinner. What ingredients should I buy, and what might it cost?';
+ const reply=await generateReply({message:note,context:{savedNoteRequest:true}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! Here is a spaghetti meal plan with ingredients and a sourced budget.',[{title:'Retailer source',url:'https://example.com/groceries'}])};
+ });
+ assert.equal(payload.input.at(-1).content,note);
+ assert.equal(payload.tool_choice,'auto');
+ assert.equal(payload.tools[0].search_context_size,'low');
+ assert.match(payload.instructions,/complete text of a saved note/);
+ assert.match(payload.instructions,/do not assume every saved note is a shopping list/);
+ const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
+ assert.match(reply,/spaghetti meal plan/);
+ assert.match(reply,/\[Retailer source\]\(https:\/\/example\.com\/groceries\)/);
+});
+
+test('saved notes with ordinary questions receive normal answers',async()=>{
+ let payload;
+ await generateReply({message:'How can I organize my week?',context:{savedNoteRequest:true}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! Start with your priorities.')};
+ });
+ assert.equal(payload.input.at(-1).content,'How can I organize my week?');
+ assert.equal(payload.tool_choice,'auto');
+ assert.match(payload.instructions,/If it asks a general question, respond normally and directly/);
+});
+
+test('answers promo-code searches naturally with web citations',async()=>{
+ let payload;
+ const source={title:'FairPrice promotions',url:'https://www.fairprice.com.sg/promotions'};
  const reply=await generateReply({
-  message:'Find current promo codes for Sony.',
+  message:'Find current promo codes for FairPrice.',
   context:{promoCodeSearch:true}
  },env,async(_url,options)=>{
   payload=JSON.parse(options.body);
-  return {ok:true,status:200,json:async()=>response('Hello! '+JSON.stringify({codes:[{
-   retailer:'Sony Singapore',
-   code:'SONY10',
-   discount:'10% off',
-   terms:'Selected products',
-   validity:'unconfirmed',
-   sourceUrl:source.url
-  }]}),[source])};
+  return {ok:true,status:200,json:async()=>response('Hello! I found a FairPrice promotion. Use **FP10** for 10% off selected items, subject to the terms on the [FairPrice promotion page](https://www.fairprice.com.sg/promotions). The page does not confirm whether this code is currently valid.',[source])};
  });
- assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tool_choice,'auto');
  assert.equal(payload.tools[0].search_context_size,'low');
- assert.equal(payload.max_output_tokens,800);
- assert.match(payload.instructions,/Perform one live web search/);
- assert.match(payload.instructions,/source page that explicitly shows this exact code/);
- assert.match(payload.instructions,/sourceUrl.*exact HTTPS URL/s);
- assert.match(payload.instructions,/override the standard greeting rule/);
- assert.match(reply,/\*\*Sony Singapore — `SONY10`\*\*/);
- assert.match(reply,/\[View source\]\(https:\/\/www\.sony\.com\.sg\/promotions\)/);
- assert.match(reply,/Not confirmed by source/);
- assert.match(reply,/\[Sony Singapore promotions\]\(https:\/\/www\.sony\.com\.sg\/promotions\)/);
+ assert.equal(payload.max_output_tokens,1000);
+ assert.equal(payload.input.at(-1).content,'Find current promo codes for FairPrice.');
+ assert.match(payload.instructions,/Answer naturally with a short introduction and one Markdown bullet per result, not JSON or a product table/);
+ assert.match(payload.instructions,/Link each code directly to the cited page that displays it/);
+ assert.match(reply,/\*\*FP10\*\*/);
+ assert.match(reply,/\[FairPrice promotion page\]\(https:\/\/www\.fairprice\.com\.sg\/promotions\)/);
+ assert.match(reply,/does not confirm whether this code is currently valid/);
+ assert.match(reply,/\[FairPrice promotions\]\(https:\/\/www\.fairprice\.com\.sg\/promotions\)/);
 
- const uncitedCode=await generateReply({
-  message:'Find codes for Sony',
-  context:{promoCodeSearch:true}
- },env,async()=>({ok:true,status:200,json:async()=>response(JSON.stringify({codes:[{
-  retailer:'Sony',
-  code:'FAKE20',
-  discount:'20% off',
-  terms:'',
-  validity:'confirmed',
-  sourceUrl:'https://example.com/fake'
- }]}),[{title:'Sony home page',url:'https://www.sony.com.sg/'}])}));
- assert.match(uncitedCode,/No exact promo codes could be verified/);
- assert.doesNotMatch(uncitedCode,/FAKE20/);
-
- const noSources=await generateReply({message:'Find codes for Sony',context:{promoCodeSearch:true}},env,async()=>({ok:true,status:200,json:async()=>response(JSON.stringify({codes:[]}))}));
- assert.match(noSources,/No exact promo codes could be verified/);
+ const noSources=await generateReply({message:'Find codes for FairPrice',context:{promoCodeSearch:true}},env,async()=>({ok:true,status:200,json:async()=>response('The official promotions page has no published voucher code.')}));
+ assert.match(noSources,/No promo codes could be verified from accessible web sources/);
 });
 
 test('Can require an actual web search for shopping lookups',async()=>{
