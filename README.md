@@ -14,11 +14,11 @@ Set these as server-side environment variables:
 - `SEARCH_ACCESS_CODE` — optional shared code to limit public search usage
 - `CHAT_ACCESS_CODE` — optional shared code to limit AI chat
 
-Keys are sent only from the server. Never put them in browser code or commit them to GitHub. On Netlify, set the variables in **Project configuration → Environment variables**; on Vercel, set them in **Project Settings → Environment Variables**. Redeploy after changing variables.
+Keys are sent only from the server. Never put them in browser code or commit them to GitHub. On Netlify, set the variables in **Project configuration → Environment variables** and redeploy.
 
 Check `/api/status` for `shoppingConfigured:true`, then search a product. The status endpoint confirms only that required settings are present; it does not verify the provider's key, model, or web-search access. If the provider rejects the Responses API or `web_search` tool, check its documentation and model permissions.
 
-AI chat web searches can take up to two minutes before timing out. Saved-note shopping requests use the same AI chat and web-search path as ordinary chat. Vercel deployments use the `/api` functions in this repository; Netlify deployments use the configured Netlify Functions.
+AI chat web searches can take up to two minutes before timing out. Saved-note shopping requests use the same AI chat and web-search path as ordinary chat.
 
 ## Local development
 
