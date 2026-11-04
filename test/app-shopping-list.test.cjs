@@ -12,9 +12,18 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
- let chatRequest,resolveChat;
+ const budgetSearches=[];
  const fetch=async(url,options)=>{
-  if(url==='/api/chat'){chatRequest=JSON.parse(options.body);return new Promise(resolve=>{resolveChat=()=>resolve({ok:true,json:async()=>({reply:'Hello! Estimated listed-price budget: S$18.20.'})})})}
+  if(url.startsWith('/api/search?q=')){
+   const query=decodeURIComponent(url.slice('/api/search?q='.length));
+   budgetSearches.push(query);
+   const product=query.includes('pork')
+    ?{title:'Pork 300g',merchant:'FairPrice',price:5.8,url:'https://www.fairprice.com.sg/product/pork'}
+    :query.includes('broccoli')
+    ?{title:'Broccoli 200g',merchant:'FairPrice',price:3.2,url:'https://www.fairprice.com.sg/product/broccoli'}
+    :{title:'Milk 1L',merchant:'FairPrice',price:9.2,url:'https://www.fairprice.com.sg/product/milk'};
+   return {ok:true,json:async()=>({products:[product]})};
+  }
   return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
  };
  const fixtureText=[
@@ -26,6 +35,8 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  ].join('\n');
  const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
+ const parsedBudget=JSON.parse(vm.runInContext("JSON.stringify(parseBudgetItems('buy from fairprice\\n- 10eggs\\n- meat: 500g\\n- rice 5kg\\n- milk 2L'))",context));
+ assert.deepEqual(parsedBudget,{items:['10 eggs','meat 500g','rice 5kg','milk 2L'],storeHint:'fairprice'});
  context.fixtureText=fixtureText;
  vm.runInContext("state.results=[];state.chats=[{role:'assistant',text:fixtureText}];renderRight()",context);
  assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,3);
@@ -63,15 +74,16 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  vm.runInContext('state.aiConfigured=true',context);
  handlers.click({target:{closest:()=>({dataset:{action:'note-products',id:noteId},closest:()=>({removeAttribute(){}})})}});
  const noteText=JSON.parse(stored['shopwise-live-v1']).notes[0].text;
- assert.equal(chatRequest.message,JSON.parse(stored['shopwise-live-v1']).notes[0].text);
- assert.equal(chatRequest.context.budgetEstimate,true);
- assert.deepEqual(chatRequest.context.offers,[]);
- assert.ok(elements.get('right').innerHTML.includes('Analyzing your note and checking product prices…'));
+ assert.equal(noteText,JSON.parse(stored['shopwise-live-v1']).notes[0].text);
+ assert.ok(elements.get('right').innerHTML.includes('Finding product matches and estimating your budget…'));
  assert.ok(!elements.get('right').innerHTML.includes(noteText));
  assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user")',context),false);
- resolveChat();
- await new Promise(resolve=>setImmediate(resolve));
- assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20.'));
+ await new Promise(resolve=>setTimeout(resolve,0));
+ assert.deepEqual(budgetSearches.sort(),['broccoli 200g Singapore','milk 500ml Singapore','pork 200g Singapore']);
+ assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,6);
+ assert.ok(elements.get('right').innerHTML.includes('Estimated listed-price budget: S$18.20 for one matched pack per listed item.'));
+ assert.ok(elements.get('right').innerHTML.includes('Pork 300g'));
+ assert.ok(!elements.get('right').innerHTML.includes('AI unavailable'));
  assert.ok(!elements.get('right').innerHTML.includes(noteText));
  context.budgetReply=[
   'Hello!',
