@@ -40,6 +40,18 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  handlers.click({target:{closest:()=>({dataset:{action:'page',id:'cart'}})}});
  for(const title of ['Australia Strawberries 250g','Australia Strawberries 250G','Strawberries 250G+'])assert.ok(elements.get('center').innerHTML.includes(title));
  assert.ok(elements.get('center').innerHTML.includes('S$16.30'));
+ context.receiptRows=Array.from({length:5},(_,index)=>({title:`Banana ${index+1} ([redmart.lazada.sg](https://redmart.lazada.sg/products/${index+1}))`,merchant:'RedMart',price:index+1,url:`https://redmart.lazada.sg/products/${index+1}`}));
+ vm.runInContext('state.cart=receiptRows;renderCart()',context);
+ const receipt=elements.get('center').innerHTML;
+ assert.equal((receipt.match(/class="receipt-item"/g)||[]).length,5);
+ assert.ok(receipt.includes('Banana 1'));
+ assert.ok(receipt.includes('Banana 5'));
+ assert.ok(!receipt.includes('Banana 1 (redmart.lazada.sg)'));
+ assert.ok(receipt.includes('S$15.00'));
+ assert.equal(vm.runInContext("productTitle('Bread ([coldstorage.com.sg] (https://coldstorage.com.sg/search?q=bread))')",context),'Bread');
+ const resultCard=vm.runInContext(`card({title:'Banana ([redmart.lazada.sg](https://redmart.lazada.sg/products/1))',merchant:'RedMart',price:1,url:'https://redmart.lazada.sg/products/1',observedAt:new Date().toISOString()},0)`,context);
+ assert.ok(resultCard.includes('<h4>Banana</h4>'));
+ assert.ok(!resultCard.includes('<h4>Banana (redmart.lazada.sg)'));
  context.catalogRows=Array.from({length:16},(_,index)=>({id:`item-${index+1}`,title:`Product ${index+1}`,merchant:'Fairprice1',price:index+1,url:`https://www.fairprice.com.sg/product/${index+1}`,observedAt:new Date().toISOString()}));
  vm.runInContext('state.results=catalogRows',context);
  const summary=vm.runInContext('summaryText()',context);
