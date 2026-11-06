@@ -53,6 +53,7 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.match(modal,/class="cart-receipt-overlay"/);
  assert.match(modal,/role="dialog" aria-modal="true"/);
  assert.match(modal,/aria-label="Close shopping list"/);
+ assert.doesNotMatch(modal,/Not a checkout total/);
  for(let index=1;index<=5;index++)assert.ok(modal.includes(`Banana ${index}`));
  assert.ok(modal.includes('S$15.00'));
  assert.equal(vm.runInContext('state.cartReceiptOpen',context),true);
@@ -75,6 +76,7 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.ok(!summary.includes('[Product 13]'));
  handlers.click({target:{closest:()=>({dataset:{action:'page',id:'saved'}})}});
  assert.match(elements.get('center').innerHTML,/id="note-form"/);
+ assert.doesNotMatch(elements.get('center').innerHTML,/Saved product listings|No saved product listings yet/);
  assert.match(elements.get('center').innerHTML,/id="note-title"/);
  assert.match(elements.get('center').innerHTML,/id="note-text"/);
  elements.get('note-title').value='Weekly groceries';
