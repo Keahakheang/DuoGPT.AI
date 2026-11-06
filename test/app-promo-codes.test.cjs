@@ -88,3 +88,19 @@ test('Promo answer renderer separates inline retailer-code entries into list ite
  assert.match(rendered,/<code class="promo-code-token">MOCT10<\/code>/);
  assert.match(rendered,/<a href="https:\/\/example\.com\/promo"/);
 });
+
+test('Promo answer renderer shows Save code for bold-formatted promo codes',()=>{
+ const elements=new Map();
+ const makeElement=()=>({innerHTML:'',textContent:'',value:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
+ const getElementById=id=>{
+  if(!elements.has(id))elements.set(id,makeElement());
+  return elements.get(id);
+ };
+ const storage={getItem:()=>null,setItem(){},removeItem(){}};
+ const document={body:{classList:{toggle(){}}},getElementById,addEventListener(){}};
+ const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch:async()=>({ok:true,json:async()=>({})}),setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
+ vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
+ const rendered=vm.runInContext(`renderPromoAnswer("- **PAYLATERIT8** — S$8 off with a minimum spend. [Sony Store](https://store.sony.com.sg)",true)`,context);
+ assert.match(rendered,/<code class="promo-code-token">PAYLATERIT8<\/code>/);
+ assert.match(rendered,/data-action="promo-save-code" data-index="0">Save code<\/button>/);
+});

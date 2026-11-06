@@ -44,7 +44,7 @@ function renderPromoAnswer(text,allowSave=false){
  return output.join('');
 }
 function promoAnswerItems(text){const normalized=String(text).replace(/\s+-\s+(?=(?:\*\*)?[A-Za-z][A-Za-z0-9 &.'’()-]{1,40}\s+[—–]\s*)/g,'\n- ');return normalized.split(/\r?\n/).flatMap(line=>{const bullet=line.match(/^\s*[-*]\s+(.+)$/);return bullet?[bullet[1].trim()]:[]})}
-function promoCodeFromItem(item){const match=String(item).match(/`([^`]+)`/);if(!match)return '';const code=match[1].trim();return /^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/.test(code)?code:''}
+function promoCodeFromItem(item){const text=String(item),match=text.match(/`([^`]+)`/)||text.match(/^\s*\*\*([A-Za-z0-9][A-Za-z0-9_-]{1,39})\*\*/);if(!match)return '';const code=match[1].trim();return /^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/.test(code)?code:''}
 function promoCodesFromAnswer(answer){return [...new Set(promoAnswerItems(answer).map(promoCodeFromItem).filter(Boolean).map(code=>code.toUpperCase()))]}
 function removeDuplicateSavedPromos(promos){const seen=new Set();return promos.filter(promo=>{const codes=promoCodesFromAnswer(promo.answer);if(codes.length===1&&seen.has(codes[0]))return false;codes.forEach(code=>seen.add(code));return true})}
 function isPromoCodeSaved(code){const normalized=String(code||'').trim().toUpperCase();return !!normalized&&state.savedPromos.some(promo=>promoCodesFromAnswer(promo.answer).includes(normalized))}
@@ -53,7 +53,7 @@ function renderPromoInline(text){
  const pattern=/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]\n]+\]\(https:\/\/[^\s)]+\))/g;
  return String(text).split(pattern).map(part=>{
   if(/^`[^`]+`$/.test(part))return `<code class="promo-code-token">${esc(part.slice(1,-1))}</code>`;
-  if(/^\*\*[^*]+\*\*$/.test(part))return `<strong>${renderPromoInline(part.slice(2,-2))}</strong>`;
+  if(/^\*\*[^*]+\*\*$/.test(part)){const value=part.slice(2,-2);return /^[A-Za-z0-9][A-Za-z0-9_-]{1,39}$/.test(value)?`<code class="promo-code-token">${esc(value)}</code>`:`<strong>${renderPromoInline(value)}</strong>`}
   return renderChatInline(part);
  }).join('');
 }
