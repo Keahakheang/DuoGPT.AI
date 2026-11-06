@@ -143,8 +143,11 @@ test('answers promo-code searches naturally with web citations',async()=>{
  assert.equal(payload.tools[0].search_context_size,'low');
  assert.equal(payload.max_output_tokens,1000);
  assert.equal(payload.input.at(-1).content,'Find current promo codes for FairPrice.');
- assert.match(payload.instructions,/Answer naturally with a short introduction and one Markdown bullet per result, not JSON or a product table/);
+ assert.match(payload.instructions,/Answer naturally with a short introduction and one Markdown bullet per verified result, not JSON or a product table/);
  assert.match(payload.instructions,/Link each code directly to the cited page that displays it/);
+ assert.match(payload.instructions,/verify its exact spelling/);
+ assert.match(payload.instructions,/one targeted check of a reputable coupon source/);
+ assert.match(payload.instructions,/Exclude expired, mismatched, or unsupported codes/);
  assert.match(reply,/\*\*FP10\*\*/);
  assert.match(reply,/\[FairPrice promotion page\]\(https:\/\/www\.fairprice\.com\.sg\/promotions\)/);
  assert.match(reply,/does not confirm whether this code is currently valid/);

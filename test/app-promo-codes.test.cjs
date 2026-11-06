@@ -16,12 +16,13 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById,addEventListener:(name,handler)=>handlers[name]=handler};
  let request;
+ let headphoneSearches=0;
  const fetch=async(url,options)=>{
   if(url==='/api/status')return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
   request=JSON.parse(options.body);
-  const codes=request.message.includes('headphones')
-   ?['Hello! Current codes:','- **Shopee — `AUDIO10`** — 10% off. [View source](https://shopee.example/promotions)']
-   :['Hello! Current Singapore-relevant codes found:','- **Sony Singapore — `SONY10`** — 10% off selected products; Not confirmed by source. [View source](https://sony.example/promotions)','- **Another store — `SAVE20`** — S$20 off. [View source](https://another.example/promotions)','','Sources:','- [Sony Singapore promotions](https://sony.example/promotions)'];
+  let codes;
+  if(request.message.includes('headphones')){const headphoneCode=headphoneSearches++?'audio10':'AUDIO10';codes=['Hello! Current codes:',`- **Shopee — \`${headphoneCode}\`** — 10% off. [View source](https://shopee.example/promotions)`]}
+  else codes=['Hello! Current Singapore-relevant codes found:','- **Sony Singapore — `SONY10`** — 10% off selected products; Not confirmed by source. [View source](https://sony.example/promotions)','- **Another store — `SAVE20`** — S$20 off. [View source](https://another.example/promotions)','','Sources:','- [Sony Singapore promotions](https://sony.example/promotions)'];
   return {ok:true,json:async()=>({reply:codes.join('\n')})};
  };
  const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
@@ -49,6 +50,9 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.doesNotMatch(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].answer,/SAVE20/);
  assert.match(getElementById('center').innerHTML,/Saved promo codes/);
  assert.match(getElementById('center').innerHTML,/data-action="promo-remove"/);
+ assert.match(getElementById('center').innerHTML,/data-action="promo-save-code" data-index="0" disabled>Saved<\/button>/);
+ handlers.click({target:{closest:()=>({dataset:{action:'promo-save-code',index:'0'}})}});
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos.length,1);
 
  getElementById('promo-query').value='wireless headphones';
  handlers.submit({target:{id:'promo-form'},preventDefault(){}});
@@ -57,6 +61,14 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.match(updatedPage,/AUDIO10/);
  assert.match(updatedPage,/SONY10/);
  assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].query,'Sony promocode');
+ handlers.click({target:{closest:()=>({dataset:{action:'promo-save-code',index:'0'}})}});
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos.length,2);
+ getElementById('promo-query').value='headphones again';
+ handlers.submit({target:{id:'promo-form'},preventDefault(){}});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.match(getElementById('center').innerHTML,/data-index="0" disabled>Saved<\/button>/);
+ handlers.click({target:{closest:()=>({dataset:{action:'promo-save-code',index:'0'}})}});
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos.length,2);
 });
 
 test('Promo answer renderer separates inline retailer-code entries into list items',()=>{

@@ -31,7 +31,9 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.equal((elements.get('right').innerHTML.match(/data-action="chat-cart-add"/g)||[]).length,3);
  assert.ok(!elements.get('right').innerHTML.includes('Lowest listed'));
  assert.ok(elements.get('right').innerHTML.includes('data-action="help"'));
+ elements.get('chat-scroll').scrollTop=37;
  for(let index=0;index<3;index++)handlers.click({target:{closest:()=>({dataset:{action:'chat-cart-add',index:String(index)}})}});
+ assert.equal(elements.get('chat-scroll').scrollTop,37);
  const cart=JSON.parse(vm.runInContext('JSON.stringify(state.cart)',context));
  assert.equal(cart.length,3);
  assert.deepEqual(cart.map(item=>item.title),['Australia Strawberries 250g','Australia Strawberries 250G','Strawberries 250G+']);

@@ -114,6 +114,16 @@ body.assistant-page .hero { display:none }
 .promo-result-list li::before { content:"";position:absolute;left:15px;top:17px;width:7px;height:7px;border-radius:50%;background:#32a078;box-shadow:0 0 0 4px #e6f4eb }
 .promo-code-token { display:inline-block;padding:2px 7px;border:1px dashed #b6d2c0;border-radius:5px;background:#eff7f0;color:#245b46;font-size:.95em;font-weight:800;letter-spacing:.03em }
 .promo-answer-body a { color:var(--accent);font-weight:750;text-decoration:underline;text-underline-offset:2px }
+.saved-promo-list { display:grid;gap:12px }
+.saved-promo { position:relative;padding:16px;border:1px solid #e5ece6;border-radius:12px;background:#fff }
+.saved-promo-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-right:82px;margin-bottom:12px }
+.saved-promo-heading h4 { margin:0 0 3px;color:#315b49;font-size:13px }
+.saved-promo-heading span { color:#899a8f;font-size:10px;line-height:1.4 }
+.saved-promo-heading .inline-action { position:absolute;top:14px;right:14px;padding:6px 9px }
+.saved-promo .promo-answer-body { padding:11px 13px;border:1px solid #e8eee9;border-radius:10px;background:#fbfdfb }
+.saved-promo .promo-result-list { margin:0 }
+.saved-promo .promo-result-list li { padding:0;border:0;border-radius:0;background:transparent }
+.saved-promo .promo-result-list li::before { display:none }
 @keyframes promo-spin { to { transform:rotate(360deg) } }
 @keyframes welcome-pop { from { opacity:0;transform:translateY(14px) scale(.98) } to { opacity:1;transform:translateY(0) scale(1) } }
 @keyframes welcome-text-bob { 0%,50%,100% { transform:translateY(0) } 25% { transform:translateY(-4px) } 75% { transform:translateY(3px) } }
