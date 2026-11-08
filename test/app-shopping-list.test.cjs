@@ -9,9 +9,10 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  const elements=new Map();
  const makeElement=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
  for(const id of ['toast','navigation','page-title','page-sub','workspace','promos','center','right','cart-modal-root','chat-scroll','note-title','note-text'])elements.set(id,makeElement());
+ const selectedNoteCategory={value:'grocery-finding'};
  const stored={};
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
- const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),addEventListener:(name,handler)=>handlers[name]=handler};
+ const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),querySelector:selector=>selector==='input[name="note-category"]:checked'?selectedNoteCategory:null,addEventListener:(name,handler)=>handlers[name]=handler};
  const chatRequests=[];
  const fetch=async(url,options)=>{
   if(url==='/api/chat'){chatRequests.push(JSON.parse(options.body));return {ok:true,json:async()=>({reply:'Hello! Here is a meal plan based on your note.'})}}
@@ -81,15 +82,24 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.doesNotMatch(elements.get('center').innerHTML,/Saved product listings|No saved product listings yet/);
  assert.match(elements.get('center').innerHTML,/id="note-title"/);
  assert.match(elements.get('center').innerHTML,/id="note-text"/);
+ assert.equal((elements.get('center').innerHTML.match(/name="note-category"/g)||[]).length,4);
+ for(const category of ['Groceries shopping','Food preparation','Meal planning','General'])assert.ok(elements.get('center').innerHTML.includes(category));
+ assert.doesNotMatch(elements.get('center').innerHTML,/What would you like help with\?|Product research/);
+ assert.match(elements.get('center').innerHTML,/Recipes, cooking steps, ingredient substitutions\./);
+ assert.doesNotMatch(elements.get('center').innerHTML,/Get recipes/);
+ assert.doesNotMatch(elements.get('center').innerHTML,/<small><\/small>/);
+ assert.match(elements.get('center').innerHTML,/<strong>General<\/strong><\/span>/);
  elements.get('note-title').value='Weekly groceries';
  elements.get('note-text').value='this week cooking\n- pork: 200g\n- broccoli: 200g\n- milk: 500ml';
  handlers.submit({target:{id:'note-form'},preventDefault(){}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].text,elements.get('note-text').value);
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].title,'Weekly groceries');
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].category,'grocery-finding');
+ assert.ok(elements.get('center').innerHTML.includes('<span class="note-category-badge">Groceries shopping</span>'));
  assert.ok(elements.get('center').innerHTML.includes('<h4 class="personal-note-title">Weekly groceries</h4>'));
  assert.match(elements.get('center').innerHTML,/aria-label="Note actions"/);
  assert.match(elements.get('center').innerHTML,/data-action="note-products" data-id=/);
- assert.ok(elements.get('center').innerHTML.includes('Find products &amp; estimate budget'));
+ assert.ok(elements.get('center').innerHTML.includes('Get AI help with this note'));
  const noteId=JSON.parse(stored['shopwise-live-v1']).notes[0].id;
  vm.runInContext('state.aiConfigured=true',context);
  handlers.click({target:{closest:()=>({dataset:{action:'note-products',id:noteId},closest:()=>({removeAttribute(){}})})}});
@@ -102,6 +112,7 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  assert.equal(chatRequests.length,1);
  assert.equal(chatRequests[0].message,noteText);
  assert.equal(chatRequests[0].context.savedNoteRequest,true);
+ assert.equal(chatRequests[0].context.savedNoteCategory,'grocery-finding');
  assert.ok(elements.get('right').innerHTML.includes('Here is a meal plan based on your note.'));
  assert.ok(!elements.get('right').innerHTML.includes('AI unavailable'));
  assert.equal(chatRequests[0].context.budgetEstimate,false);

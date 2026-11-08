@@ -28,6 +28,7 @@ test('Validates messages and bounds optional history and shopping context',()=>{
  assert.deepEqual(JSON.parse(input.context).offers,[{store:'Shop',itemPriceSGD:5,title:'',sourceUrl:'',imageUrl:''}]);
  assert.equal(JSON.parse(input.context).budgetEstimate,false);
  assert.equal(JSON.parse(input.context).savedNoteRequest,false);
+ assert.equal(JSON.parse(input.context).savedNoteCategory,'general');
  assert.equal(input.promoCodeSearch,true);
  assert.equal(JSON.parse(input.context).promoCodeSearch,true);
  assert.equal(validateInput({message:'x'.repeat(5000),context:{savedNoteRequest:true}}).message.length,5000);
@@ -103,7 +104,7 @@ test('requires a live search and price-grounded budget for a typed shopping list
 test('saved-note requests send the complete note to AI for context-aware answers',async()=>{
  let payload;
  const note='I want to cook spaghetti this weekend for lunch and dinner. What ingredients should I buy, and what might it cost?';
- const reply=await generateReply({message:note,context:{savedNoteRequest:true}},env,async(_url,options)=>{
+ const reply= await generateReply({message:note,context:{savedNoteRequest:true,savedNoteCategory:'food-preparation'}},env,async(_url,options)=>{
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! Here is a spaghetti meal plan with ingredients and a sourced budget.',[{title:'Retailer source',url:'https://example.com/groceries'}])};
  });
@@ -112,8 +113,10 @@ test('saved-note requests send the complete note to AI for context-aware answers
  assert.equal(payload.tools[0].search_context_size,'low');
  assert.match(payload.instructions,/complete text of a saved note/);
  assert.match(payload.instructions,/do not assume every saved note is a shopping list/);
+ assert.match(payload.instructions,/For a Food preparation note, focus on practical recipes/);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
+ assert.equal(JSON.parse(contextMessage).savedNoteCategory,'food-preparation');
  assert.match(reply,/spaghetti meal plan/);
  assert.match(reply,/\[Retailer source\]\(https:\/\/example\.com\/groceries\)/);
 });
@@ -127,6 +130,19 @@ test('saved notes with ordinary questions receive normal answers',async()=>{
  assert.equal(payload.input.at(-1).content,'How can I organize my week?');
  assert.equal(payload.tool_choice,'auto');
  assert.match(payload.instructions,/If it asks a general question, respond normally and directly/);
+});
+
+test('saved-note categories are validated and guide grocery searches',async()=>{
+ let payload;
+ await generateReply({message:'Fresh ingredients for dinner',context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}},env,async(_url,options)=>{
+  payload=JSON.parse(options.body);
+  return {ok:true,status:200,json:async()=>response('Hello! Here are some ingredients.')};
+ });
+ assert.equal(payload.tool_choice,'auto');
+ assert.equal(payload.tools[0].search_context_size,'low');
+ assert.match(payload.instructions,/search Singapore retailers for relevant products and current listed prices/);
+ const invalid=require('../lib/ai.cjs').validateInput({message:'A note',context:{savedNoteRequest:true,savedNoteCategory:'product-research'}});
+ assert.equal(JSON.parse(invalid.context).savedNoteCategory,'general');
 });
 
 test('answers promo-code searches naturally with web citations',async()=>{
