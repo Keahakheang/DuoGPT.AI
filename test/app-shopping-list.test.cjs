@@ -14,8 +14,9 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  const storage={getItem:key=>stored[key]||null,setItem:(key,value)=>stored[key]=value,removeItem:key=>delete stored[key]};
  const document={body:{classList:{toggle(){}}},getElementById:id=>elements.get(id)||makeElement(),querySelector:selector=>selector==='input[name="note-category"]:checked'?selectedNoteCategory:null,addEventListener:(name,handler)=>handlers[name]=handler};
  const chatRequests=[];
+ const noteReply='Hello! Here is a sourced result:\n\n| Product | Retailer | Listed price (SGD) | Relevant details | Shopping list |\n| --- | --- | ---: | --- | --- |\n| [Pork soup ingredients](https://www.fairprice.com.sg/product/pork-soup) | FairPrice | S$4.95 | Verified listing | + Add to shopping list |';
  const fetch=async(url,options)=>{
-  if(url==='/api/chat'){chatRequests.push(JSON.parse(options.body));return {ok:true,json:async()=>({reply:'Hello! Here is a meal plan based on your note.'})}}
+  if(url==='/api/chat'){chatRequests.push(JSON.parse(options.body));return {ok:true,json:async()=>({reply:noteReply})}}
   return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
  };
  const fixtureText=[
@@ -82,10 +83,11 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  assert.doesNotMatch(elements.get('center').innerHTML,/Saved product listings|No saved product listings yet/);
  assert.match(elements.get('center').innerHTML,/id="note-title"/);
  assert.match(elements.get('center').innerHTML,/id="note-text"/);
- assert.equal((elements.get('center').innerHTML.match(/name="note-category"/g)||[]).length,4);
- for(const category of ['Groceries shopping','Food preparation','Meal planning','General'])assert.ok(elements.get('center').innerHTML.includes(category));
+ assert.equal((elements.get('center').innerHTML.match(/name="note-category"/g)||[]).length,3);
+ for(const category of ['General','Groceries shopping','Recipe ingredients'])assert.ok(elements.get('center').innerHTML.includes(category));
+ assert.ok(elements.get('center').innerHTML.includes('Know what dish you want to make? Get the ingredients and amounts you need.'));
+ assert.ok(!elements.get('center').innerHTML.includes('Meal planning'));
  assert.doesNotMatch(elements.get('center').innerHTML,/What would you like help with\?|Product research/);
- assert.match(elements.get('center').innerHTML,/Recipes, cooking steps, ingredient substitutions\./);
  assert.doesNotMatch(elements.get('center').innerHTML,/Get recipes/);
  assert.doesNotMatch(elements.get('center').innerHTML,/<small><\/small>/);
  assert.match(elements.get('center').innerHTML,/<strong>General<\/strong><\/span>/);
@@ -113,10 +115,17 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  assert.equal(chatRequests[0].message,noteText);
  assert.equal(chatRequests[0].context.savedNoteRequest,true);
  assert.equal(chatRequests[0].context.savedNoteCategory,'grocery-finding');
- assert.ok(elements.get('center').innerHTML.includes('Here is a meal plan based on your note.'));
- assert.ok(!elements.get('right').innerHTML.includes('Here is a meal plan based on your note.'));
+ assert.ok(elements.get('center').innerHTML.includes('Here is a sourced result:'));
+ assert.ok(!elements.get('right').innerHTML.includes('Here is a sourced result:'));
  assert.ok(elements.get('center').innerHTML.indexOf(noteText)<elements.get('center').innerHTML.indexOf('Shopwise response'));
- assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].answer,'Hello! Here is a meal plan based on your note.');
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].answer,noteReply);
+ assert.match(elements.get('center').innerHTML,/class="chat-list-button" data-action="saved-note-cart-add"/);
+ assert.ok(elements.get('center').innerHTML.includes('+ Add to shopping list</button>'));
+ const cartBeforeSavedNote=vm.runInContext('state.cart.length',context);
+ handlers.click({target:{closest:()=>({dataset:{action:'saved-note-cart-add',noteId,index:'0'}})}});
+ assert.equal(vm.runInContext('state.cart.length',context),cartBeforeSavedNote+1);
+ assert.ok(vm.runInContext('state.cart.some(item=>item.title==="Pork soup ingredients")',context));
+ assert.match(elements.get('center').innerHTML,/data-action="saved-note-cart-add"[^>]*disabled[^>]*>&#10003; Added<\/button>/);
  assert.equal(chatRequests[0].context.budgetEstimate,false);
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);

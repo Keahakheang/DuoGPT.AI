@@ -2,7 +2,7 @@
 
 Shopwise uses an OpenAI-compatible provider's **Responses API web search tool** for live product searches and AI answers. The provider and selected model must have web search enabled. Product titles and listed prices are extracted from cited web results; coverage and price accuracy vary, and users should verify the exact item and final checkout total with the retailer. Shopwise does not connect to retailer accounts or add items to retailer carts.
 
-Saved notes and the shopping list stay in the local browser. **Get AI help with this note** sends the complete note to the assistant; its response appears below the saved note and is stored with that note on this device. The AI responds to the note as written, searching and estimating cited prices when it is a shopping request and answering normally for other notes.
+Saved notes and the shopping list stay in the local browser. Notes can be marked **General**, **Groceries shopping** (find and compare products you want to buy), or **Recipe ingredients** (identify ingredients for a dish you want to cook). **Get AI help with this note** sends the complete note to the assistant; its response appears below the saved note and is stored with that note on this device. The AI responds to the note as written and searches for useful sources when appropriate.
 
 ## Configure the provider
 
