@@ -206,7 +206,8 @@ body.assistant-page #right { view-transition-name:assistant-content }
 .alert{font-size:11px;line-height:1.6;background:#fff4e6;color:#825d36;border:1px solid #f0dec8;padding:11px 12px;border-radius:10px;margin:9px 0}
 .sr-only:focus{position:static;width:auto;height:auto;clip:auto}
 @media(max-width:1200px){.right-column{display:block}.right-column>*+*{margin-top:15px}}
-@media(max-width:1200px){.workspace.general-layout{grid-template-columns:minmax(0,1fr)}.workspace.general-layout .right-column{grid-column:1}}
+@media(max-width:1200px){.workspace.general-layout{grid-template-columns:minmax(0,1fr) minmax(260px,320px)}.workspace.general-layout .right-column{grid-column:2}}
+@media(max-width:810px){.workspace.general-layout{grid-template-columns:minmax(0,1fr)}.workspace.general-layout .right-column{grid-column:1}}
 @media(max-width:540px){.market-tile{gap:8px;padding:10px}.market-thumb,.market-placeholder{width:48px;height:48px}.market-actions{gap:5px}.market-actions a,.market-actions button{font-size:9px}.top-actions{width:100%}.top-search{width:100%}.topbar{flex-direction:column;align-items:stretch}.navigation .nav-btn{font-size:0}.navigation .nav-btn svg{width:17px;height:17px}.navigation .nav-btn .nav-count{font-size:10px}}
 @media(max-width:540px){.promo-search-row{flex-direction:column}.promo-search-row .sm-btn{align-self:flex-start}.promo-page{padding:17px}.promo-search-form{padding:13px}}
 @media(max-width:540px){.cart-receipt-overlay{padding:12px}.cart-receipt{padding:23px 18px 19px;max-height:90vh}}
