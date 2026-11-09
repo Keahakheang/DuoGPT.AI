@@ -85,7 +85,7 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  assert.match(elements.get('center').innerHTML,/id="note-text"/);
  assert.equal((elements.get('center').innerHTML.match(/name="note-category"/g)||[]).length,3);
  for(const category of ['General','Groceries shopping','Recipe ingredients'])assert.ok(elements.get('center').innerHTML.includes(category));
- assert.ok(elements.get('center').innerHTML.includes('Know what dish you want to make? Get the ingredients and amounts you need.'));
+ assert.ok(elements.get('center').innerHTML.includes('Know what dish you want to make? Get ingredients, quantities, and Singapore shopping options.'));
  assert.ok(!elements.get('center').innerHTML.includes('Meal planning'));
  assert.doesNotMatch(elements.get('center').innerHTML,/What would you like help with\?|Product research/);
  assert.doesNotMatch(elements.get('center').innerHTML,/Get recipes/);

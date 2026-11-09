@@ -103,22 +103,26 @@ test('requires a live search and price-grounded budget for a typed shopping list
 
 test('recipe ingredient notes search for a dish ingredient list',async()=>{
  let payload;
- const note='Chicken rice';
+ const note='Burger and salad for 4 people, budget $20';
  const reply= await generateReply({message:note,context:{savedNoteRequest:true,savedNoteCategory:'recipe-ingredients'}},env,async(_url,options)=>{
   payload=JSON.parse(options.body);
-  return {ok:true,status:200,json:async()=>response('Hello! Here are the ingredients for chicken rice.',[{title:'Recipe source',url:'https://example.com/chicken-rice'}])};
+  return {ok:true,status:200,json:async()=>response('Hello! Here are the ingredients for four burgers and a salad, with Singapore shopping options.',[{title:'Recipe source',url:'https://example.com/burger-salad'}])};
  });
  assert.equal(payload.input.at(-1).content,note);
- assert.equal(payload.tool_choice,'auto');
+ assert.equal(payload.tool_choice,'required');
  assert.equal(payload.tools[0].search_context_size,'low');
+ assert.equal(payload.max_output_tokens,2400);
  assert.match(payload.instructions,/complete text of a saved note/);
  assert.match(payload.instructions,/do not assume every saved note is a shopping list/);
- assert.match(payload.instructions,/For a Recipe ingredients note, treat the note as a dish the user wants to make and identify its ingredients/);
+ assert.match(payload.instructions,/assume the user has already chosen the dish or dishes/);
+ assert.match(payload.instructions,/give a complete, practical ingredient list with quantities scaled to the requested servings/);
+ assert.match(payload.instructions,/search Singapore retailers online for suitable listed products for every essential ingredient/);
+ assert.match(payload.instructions,/treat "\$" as SGD unless another currency is specified/);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
  assert.equal(JSON.parse(contextMessage).savedNoteCategory,'recipe-ingredients');
- assert.match(reply,/ingredients for chicken rice/);
- assert.match(reply,/\[Recipe source\]\(https:\/\/example\.com\/chicken-rice\)/);
+ assert.match(reply,/ingredients for four burgers and a salad/);
+ assert.match(reply,/\[Recipe source\]\(https:\/\/example\.com\/burger-salad\)/);
 });
 
 test('saved notes with ordinary questions receive normal answers',async()=>{
