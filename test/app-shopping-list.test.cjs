@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 
-test('shopping list buttons, saved text notes, and note-to-chat search work',async()=>{
+test('shopping list buttons and saved-note AI responses stay with their note',async()=>{
  const handlers={};
  const elements=new Map();
  const makeElement=()=>({innerHTML:'',textContent:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
@@ -105,16 +105,18 @@ test('shopping list buttons, saved text notes, and note-to-chat search work',asy
  handlers.click({target:{closest:()=>({dataset:{action:'note-products',id:noteId},closest:()=>({removeAttribute(){}})})}});
  const noteText=JSON.parse(stored['shopwise-live-v1']).notes[0].text;
  assert.equal(noteText,elements.get('note-text').value);
- assert.ok(elements.get('right').innerHTML.includes('Reading your note…'));
- assert.ok(elements.get('right').innerHTML.includes(noteText));
- assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user"&&message.text===JSON.parse(localStorage.getItem("shopwise-live-v1")).notes[0].text)',context),true);
+ assert.ok(elements.get('center').innerHTML.includes('Reading your note…'));
+ assert.ok(!elements.get('right').innerHTML.includes(noteText));
+ assert.equal(vm.runInContext('state.chats.some(message=>message.role==="user"&&message.text===JSON.parse(localStorage.getItem("shopwise-live-v1")).notes[0].text)',context),false);
  await new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(chatRequests.length,1);
  assert.equal(chatRequests[0].message,noteText);
  assert.equal(chatRequests[0].context.savedNoteRequest,true);
  assert.equal(chatRequests[0].context.savedNoteCategory,'grocery-finding');
- assert.ok(elements.get('right').innerHTML.includes('Here is a meal plan based on your note.'));
- assert.ok(!elements.get('right').innerHTML.includes('AI unavailable'));
+ assert.ok(elements.get('center').innerHTML.includes('Here is a meal plan based on your note.'));
+ assert.ok(!elements.get('right').innerHTML.includes('Here is a meal plan based on your note.'));
+ assert.ok(elements.get('center').innerHTML.indexOf(noteText)<elements.get('center').innerHTML.indexOf('Shopwise response'));
+ assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].answer,'Hello! Here is a meal plan based on your note.');
  assert.equal(chatRequests[0].context.budgetEstimate,false);
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);

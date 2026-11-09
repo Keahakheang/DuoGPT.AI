@@ -210,3 +210,12 @@ body.assistant-page #right { view-transition-name:assistant-content }
 @media(max-width:540px){.market-tile{gap:8px;padding:10px}.market-thumb,.market-placeholder{width:48px;height:48px}.market-actions{gap:5px}.market-actions a,.market-actions button{font-size:9px}.top-actions{width:100%}.top-search{width:100%}.topbar{flex-direction:column;align-items:stretch}.navigation .nav-btn{font-size:0}.navigation .nav-btn svg{width:17px;height:17px}.navigation .nav-btn .nav-count{font-size:10px}}
 @media(max-width:540px){.promo-search-row{flex-direction:column}.promo-search-row .sm-btn{align-self:flex-start}.promo-page{padding:17px}.promo-search-form{padding:13px}}
 @media(max-width:540px){.cart-receipt-overlay{padding:12px}.cart-receipt{padding:23px 18px 19px;max-height:90vh}}
+.saved-note-status{margin-top:12px;padding:10px 12px;border-radius:8px;background:#f4f8f5;color:#71867a;font-size:11px}
+.saved-note-answer{margin-top:14px;padding:13px;border:1px solid #dcebe1;border-left:3px solid var(--accent);border-radius:8px;background:#f8fcf9}
+.saved-note-answer h5{margin:0 0 8px;color:#315b49;font-size:11px}
+.saved-note-answer-body{color:#52695c;font-size:11px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.saved-note-answer-body a{color:#116d5b;text-decoration:underline;text-underline-offset:2px}
+.saved-note-answer-body .chat-table-scroll{white-space:normal}
+.saved-note-answer-body .chat-table-scroll:last-child{margin-bottom:0}
+.saved-note-error{margin:12px 0 0}
+.note-menu-items button:disabled{cursor:default;opacity:.65}

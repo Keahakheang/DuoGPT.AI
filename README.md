@@ -2,7 +2,7 @@
 
 Shopwise uses an OpenAI-compatible provider's **Responses API web search tool** for live product searches and AI answers. The provider and selected model must have web search enabled. Product titles and listed prices are extracted from cited web results; coverage and price accuracy vary, and users should verify the exact item and final checkout total with the retailer. Shopwise does not connect to retailer accounts or add items to retailer carts.
 
-Saved notes and the shopping list stay in the local browser. **Find products & estimate budget** sends the complete note to the AI chat and shows the answer there. The AI responds to the note as written, searching and estimating cited prices when it is a shopping request and answering normally for other notes.
+Saved notes and the shopping list stay in the local browser. **Get AI help with this note** sends the complete note to the assistant; its response appears below the saved note and is stored with that note on this device. The AI responds to the note as written, searching and estimating cited prices when it is a shopping request and answering normally for other notes.
 
 ## Configure the provider
 
@@ -18,7 +18,7 @@ Keys are sent only from the server. Never put them in browser code or commit the
 
 Check `/api/status` for `shoppingConfigured:true`, then search a product. The status endpoint confirms only that required settings are present; it does not verify the provider's key, model, or web-search access. If the provider rejects the Responses API or `web_search` tool, check its documentation and model permissions.
 
-AI chat web searches can take up to two minutes before timing out. Saved-note shopping requests use the same AI chat and web-search path as ordinary chat.
+AI chat web searches can take up to two minutes before timing out. Saved-note requests use the same AI and web-search path as ordinary chat, but their responses are kept with the saved note instead of being added to the conversation.
 
 ## Local development
 
