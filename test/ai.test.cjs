@@ -110,8 +110,8 @@ test('recipe ingredient notes search for a dish ingredient list',async()=>{
  });
  assert.equal(payload.input.at(-1).content,note);
  assert.equal(payload.tool_choice,'required');
- assert.equal(payload.tools[0].search_context_size,'low');
- assert.equal(payload.max_output_tokens,2400);
+ assert.equal(payload.tools[0].search_context_size,'medium');
+ assert.equal(payload.max_output_tokens,2800);
  assert.match(payload.instructions,/complete text of a saved note/);
  assert.match(payload.instructions,/do not assume every saved note is a shopping list/);
  assert.match(payload.instructions,/assume the user has already chosen the dish or dishes/);
@@ -136,15 +136,28 @@ test('saved notes with ordinary questions receive normal answers',async()=>{
  assert.match(payload.instructions,/If it asks a general question, respond normally and directly/);
 });
 
-test('saved-note categories are validated and guide grocery searches',async()=>{
+test('grocery shopping notes search for every requested item',async()=>{
  let payload;
- await generateReply({message:'Fresh ingredients for dinner',context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}},env,async(_url,options)=>{
+ const note='weekly groceries\n- rice 5kg\n- milk 2L\n- eggs\n- 1kg shrimp';
+ await generateReply({message:note,context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}},env,async(_url,options)=>{
   payload=JSON.parse(options.body);
-  return {ok:true,status:200,json:async()=>response('Hello! Here are some ingredients.')};
+  return {ok:true,status:200,json:async()=>response('Hello! Here are listings for rice, milk, eggs, and shrimp.')};
  });
- assert.equal(payload.tool_choice,'auto');
- assert.equal(payload.tools[0].search_context_size,'low');
- assert.match(payload.instructions,/search Singapore retailers for relevant products and current listed prices/);
+ assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tools[0].search_context_size,'medium');
+ assert.equal(payload.max_output_tokens,3200);
+ assert.match(payload.instructions,/every item in the supplied note as a separate requested line item/);
+ assert.match(payload.instructions,/for EACH item/);
+ assert.match(payload.instructions,/complete-list requirement takes priority over the general comparison result limit/);
+ assert.match(payload.instructions,/exactly one table row per requested item in the same order as the note/);
+ assert.match(payload.instructions,/still include its row and explicitly mark it "Not verified" or "Unavailable"/);
+ assert.match(payload.instructions,/confirm every requested item was covered/);
+ assert.equal(payload.input.at(-1).content,note);
+ const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ assert.equal(JSON.parse(contextMessage).savedNoteCategory,'grocery-finding');
+ assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
+ const validated=require('../lib/ai.cjs').validateInput({message:'Fresh ingredients for dinner',context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}});
+ assert.equal(JSON.parse(validated.context).savedNoteCategory,'grocery-finding');
  const invalid=require('../lib/ai.cjs').validateInput({message:'A note',context:{savedNoteRequest:true,savedNoteCategory:'product-research'}});
  assert.equal(JSON.parse(invalid.context).savedNoteCategory,'general');
  const removedCategory=require('../lib/ai.cjs').validateInput({message:'A note',context:{savedNoteRequest:true,savedNoteCategory:'meal-planning'}});
