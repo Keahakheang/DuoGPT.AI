@@ -41,6 +41,8 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.equal(request.context.promoCodeSearch,true);
  assert.match(request.message,/Sony promocode/);
  assert.match(getElementById('center').innerHTML,/class="promo-result-list"/);
+ assert.doesNotMatch(getElementById('center').innerHTML,/ai-response-disclosure|Show promo search response/);
+ assert.ok(getElementById('center').innerHTML.includes('Current Singapore-relevant codes found:'));
  assert.match(getElementById('center').innerHTML,/<li><strong>Sony Singapore — <code class="promo-code-token">SONY10<\/code><\/strong> — 10% off selected products; Not confirmed by source\. <a href="https:\/\/sony\.example\/promotions" target="_blank" rel="noopener noreferrer">View source<\/a> <button type="button" class="sm-btn promo-code-save" data-action="promo-save-code" data-index="0">Save code<\/button><\/li>/);
  assert.match(getElementById('center').innerHTML,/data-index="1">Save code/);
  assert.match(getElementById('center').innerHTML,/<a href="https:\/\/sony\.example\/promotions" target="_blank" rel="noopener noreferrer">Sony Singapore promotions<\/a>/);
@@ -50,6 +52,7 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.doesNotMatch(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].answer,/SAVE20/);
  assert.match(getElementById('center').innerHTML,/Saved promo codes/);
  assert.match(getElementById('center').innerHTML,/data-action="promo-remove"/);
+ assert.doesNotMatch(getElementById('center').innerHTML,/ai-response-disclosure|Show saved promo response/);
  assert.match(getElementById('center').innerHTML,/data-action="promo-save-code" data-index="0" disabled>Saved<\/button>/);
  handlers.click({target:{closest:()=>({dataset:{action:'promo-save-code',index:'0'}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos.length,1);

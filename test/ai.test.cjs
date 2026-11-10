@@ -48,7 +48,7 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.equal(payload.model,'gpt-5.6-luna');
  assert.equal(payload.tools[0].type,'web_search');
  assert.equal(payload.tools[0].search_context_size,'medium');
- assert.equal(payload.max_output_tokens,700);
+ assert.equal(payload.max_output_tokens,10000);
  assert.equal(payload.tools[0].user_location.country,'SG');
  assert.equal(payload.input.at(-1).content,'What is current?');
  assert.equal(payload.input.at(-2).content,'Follow up');
@@ -59,6 +59,7 @@ test('Calls Responses API with web search and displays clickable citations',asyn
  assert.match(payload.instructions,/per-100g price calculated from the cited SGD price and cited net weight/);
  assert.match(payload.instructions,/arithmetic average of the per-100g prices/);
  assert.match(payload.instructions,/country of origin and product ratings\/reviews only when directly supported by cited sources/);
+ assert.match(payload.instructions,/give a detailed, well-organized answer with useful context, explanations, practical next steps/);
  assert.match(payload.instructions,/\+ Add to shopping list/);
  assert.match(payload.instructions,/each product name a Markdown link/);
  assert.match(reply,/^Hello! A current answer\./);
@@ -73,7 +74,7 @@ test('uses faster search and expanded listing context for shopping comparisons',
   return {ok:true,status:200,json:async()=>response('A sourced price comparison.')};
  });
  assert.equal(payload.tools[0].search_context_size,'low');
- assert.equal(payload.max_output_tokens,1400);
+ assert.equal(payload.max_output_tokens,10000);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).offers.length,16);
  assert.match(payload.instructions,/up to 12 distinct, verifiable listings/);
@@ -88,7 +89,7 @@ test('requires a live search and price-grounded budget for a typed shopping list
  });
  assert.equal(payload.tool_choice,'required');
  assert.equal(payload.tools[0].search_context_size,'low');
- assert.equal(payload.max_output_tokens,1800);
+ assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/one suitable purchasable pack for each requested line/);
  assert.match(payload.instructions,/actual cited HTTPS product-page URL/);
  assert.match(payload.instructions,/Never use internal search references such as turn0search9/);
@@ -111,14 +112,14 @@ test('recipe ingredient notes search for a dish ingredient list',async()=>{
  assert.equal(payload.input.at(-1).content,note);
  assert.equal(payload.tool_choice,'required');
  assert.equal(payload.tools[0].search_context_size,'medium');
- assert.equal(payload.max_output_tokens,6500);
+ assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/complete text of a saved note/);
  assert.match(payload.instructions,/do not assume every saved note is a shopping list/);
  assert.match(payload.instructions,/assume the user has already chosen the dish or dishes/);
  assert.match(payload.instructions,/give a complete, practical ingredient list with quantities scaled to the requested servings/);
  assert.match(payload.instructions,/search Singapore retailers online for suitable listed products for every essential ingredient/);
- assert.match(payload.instructions,/one compact table row per essential ingredient/);
- assert.match(payload.instructions,/omit optional reviews, per-unit calculations, and averages/);
+ assert.match(payload.instructions,/one clearly written table row per essential ingredient/);
+ assert.match(payload.instructions,/Include enough detail to make the ingredient list and product choices useful/);
  assert.match(payload.instructions,/treat "\$" as SGD unless another currency is specified/);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
@@ -135,7 +136,9 @@ test('saved notes with ordinary questions receive normal answers',async()=>{
  });
  assert.equal(payload.input.at(-1).content,'How can I organize my week?');
  assert.equal(payload.tool_choice,'auto');
+ assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/If it asks a general question, respond normally and directly/);
+ assert.match(payload.instructions,/do not artificially shorten the answer/);
 });
 
 test('grocery shopping notes search for every requested item',async()=>{
@@ -147,15 +150,15 @@ test('grocery shopping notes search for every requested item',async()=>{
  });
  assert.equal(payload.tool_choice,'required');
  assert.equal(payload.tools[0].search_context_size,'medium');
- assert.equal(payload.max_output_tokens,6500);
+ assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/every item in the supplied note as a separate requested line item/);
  assert.match(payload.instructions,/for EACH item/);
  assert.match(payload.instructions,/complete-list requirement takes priority over the general comparison result limit/);
- assert.match(payload.instructions,/one compact table row per requested item/);
- assert.match(payload.instructions,/omit optional reviews, per-unit calculations, and averages/);
- assert.match(payload.instructions,/exactly one compact table row per requested item in the same order as the note/);
+ assert.match(payload.instructions,/one clearly written table row per requested item/);
+ assert.match(payload.instructions,/Preserve enough detail for every item/);
+ assert.match(payload.instructions,/one clearly written table row per requested item in the same order as the note/);
  assert.match(payload.instructions,/still include its row and explicitly mark it "Not verified" or "Unavailable"/);
- assert.match(payload.instructions,/confirm every requested item was covered/);
+ assert.match(payload.instructions,/confirming every requested item was covered/);
  assert.equal(payload.input.at(-1).content,note);
  const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
  assert.equal(JSON.parse(contextMessage).savedNoteCategory,'grocery-finding');
@@ -179,13 +182,14 @@ test('answers promo-code searches naturally with web citations',async()=>{
   return {ok:true,status:200,json:async()=>response('Hello! I found a FairPrice promotion. Use **FP10** for 10% off selected items, subject to the terms on the [FairPrice promotion page](https://www.fairprice.com.sg/promotions). The page does not confirm whether this code is currently valid.',[source])};
  });
  assert.equal(payload.tool_choice,'auto');
- assert.equal(payload.tools[0].search_context_size,'low');
- assert.equal(payload.max_output_tokens,1000);
+ assert.equal(payload.tools[0].search_context_size,'medium');
+ assert.equal(payload.max_output_tokens,10000);
  assert.equal(payload.input.at(-1).content,'Find current promo codes for FairPrice.');
- assert.match(payload.instructions,/Answer naturally with a short introduction and one Markdown bullet per verified result, not JSON or a product table/);
- assert.match(payload.instructions,/Link each code directly to the cited page that displays it/);
+ assert.match(payload.instructions,/Answer with a helpful introduction and one Markdown bullet per verified result, not JSON or a product table/);
+ assert.match(payload.instructions,/explain the source-supported discount, eligibility and terms, expiry if shown/);
+ assert.match(payload.instructions,/Link the code directly to the page that supports it/);
  assert.match(payload.instructions,/verify its exact spelling/);
- assert.match(payload.instructions,/one targeted check of a reputable coupon source/);
+ assert.match(payload.instructions,/a reputable coupon source/);
  assert.match(payload.instructions,/Exclude expired, mismatched, or unsupported codes/);
  assert.match(reply,/\*\*FP10\*\*/);
  assert.match(reply,/\[FairPrice promotion page\]\(https:\/\/www\.fairprice\.com\.sg\/promotions\)/);

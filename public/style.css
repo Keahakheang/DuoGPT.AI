@@ -212,8 +212,11 @@ body.assistant-page #right { view-transition-name:assistant-content }
 @media(max-width:540px){.promo-search-row{flex-direction:column}.promo-search-row .sm-btn{align-self:flex-start}.promo-page{padding:17px}.promo-search-form{padding:13px}}
 @media(max-width:540px){.cart-receipt-overlay{padding:12px}.cart-receipt{padding:23px 18px 19px;max-height:90vh}}
 .saved-note-status{margin-top:12px;padding:10px 12px;border-radius:8px;background:#f4f8f5;color:#71867a;font-size:11px}
+.ai-response-disclosure>summary{cursor:pointer;color:var(--accent);font-weight:800;line-height:1.5}
+.ai-response-disclosure>summary:focus-visible{outline:2px solid #46947b;outline-offset:3px;border-radius:3px}
 .saved-note-answer{margin-top:14px;padding:13px;border:1px solid #dcebe1;border-left:3px solid var(--accent);border-radius:8px;background:#f8fcf9}
-.saved-note-answer h5{margin:0 0 8px;color:#315b49;font-size:11px}
+.saved-note-answer>summary{font-size:11px}
+.saved-note-answer[open]>summary{margin-bottom:8px}
 .saved-note-answer-body{color:#52695c;font-size:11px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
 .saved-note-answer-body a{color:#116d5b;text-decoration:underline;text-underline-offset:2px}
 .saved-note-answer-body .chat-table-scroll{white-space:normal}
