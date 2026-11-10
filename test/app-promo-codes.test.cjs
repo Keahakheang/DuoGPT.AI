@@ -123,3 +123,19 @@ test('Promo answer renderer shows Save code when a bold code follows a bullet ma
  assert.match(rendered,/<code class="promo-code-token">784497<\/code>/);
  assert.match(rendered,/data-action="promo-save-code" data-index="0">Save code<\/button>/);
 });
+
+test('Promo answer renderer shows Save code for a linked promo code',()=>{
+ const elements=new Map();
+ const makeElement=()=>({innerHTML:'',textContent:'',value:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
+ const getElementById=id=>{
+  if(!elements.has(id))elements.set(id,makeElement());
+  return elements.get(id);
+ };
+ const storage={getItem:()=>null,setItem(){},removeItem(){}};
+ const document={body:{classList:{toggle(){}}},getElementById,addEventListener(){}};
+ const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch:async()=>({ok:true,json:async()=>({})}),setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
+ vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
+ const rendered=vm.runInContext(`renderPromoAnswer("- [OTTY28](https://store.sony.com.sg) — **S$28 off S$200 minimum spend** at Sony Store Online Singapore.",true)`,context);
+ assert.match(rendered,/<a href="https:\/\/store\.sony\.com\.sg\/"/);
+ assert.match(rendered,/data-action="promo-save-code" data-index="0">Save code<\/button>/);
+});
