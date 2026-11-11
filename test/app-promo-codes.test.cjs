@@ -139,3 +139,22 @@ test('Promo answer renderer shows Save code for a linked promo code',()=>{
  assert.match(rendered,/<a href="https:\/\/store\.sony\.com\.sg\/"/);
  assert.match(rendered,/data-action="promo-save-code" data-index="0">Save code<\/button>/);
 });
+
+test('AI Markdown headings render as larger bold labels without hash marks',()=>{
+ const elements=new Map();
+ const makeElement=()=>({innerHTML:'',textContent:'',value:'',classList:{add(){},remove(){},toggle(){}},scrollTop:0});
+ const getElementById=id=>{
+  if(!elements.has(id))elements.set(id,makeElement());
+  return elements.get(id);
+ };
+ const storage={getItem:()=>null,setItem(){},removeItem(){}};
+ const document={body:{classList:{toggle(){}}},getElementById,addEventListener(){}};
+ const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch:async()=>({ok:true,json:async()=>({})}),setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
+ vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
+ const chat=vm.runInContext(`renderChatText("## Current prices\\nCompare these options.")`,context);
+ const promo=vm.runInContext(`renderPromoAnswer("### Current offers\\n- **SAVE10** — 10% off")`,context);
+ for(const rendered of [chat,promo]){
+  assert.doesNotMatch(rendered,/##|###/);
+  assert.match(rendered,/<strong class="ai-response-heading">/);
+ }
+});
