@@ -33,6 +33,10 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.match(nav,/Promo codes/);
  assert.doesNotMatch(nav,/Store connections/);
  assert.match(page,/Find a promo code/);
+ assert.match(page,/class="surface page-body promo-search-card"/);
+ assert.match(page,/class="surface page-body saved-promo-section"/);
+ assert.match(page,/class="promo-ticket-illustration"/);
+ assert.match(page,/No saved promo codes yet/);
  assert.doesNotMatch(page,/Observed reductions|Retailer connections/);
 
  getElementById('promo-query').value='Sony promocode';
@@ -51,6 +55,7 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.match(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].answer,/SONY10/);
  assert.doesNotMatch(JSON.parse(stored['shopwise-live-v1']).savedPromos[0].answer,/SAVE20/);
  assert.match(getElementById('center').innerHTML,/Saved promo codes/);
+ assert.match(getElementById('center').innerHTML,/<article class="saved-promo">/);
  assert.match(getElementById('center').innerHTML,/data-action="promo-remove"/);
  assert.doesNotMatch(getElementById('center').innerHTML,/ai-response-disclosure|Show saved promo response/);
  assert.match(getElementById('center').innerHTML,/data-action="promo-save-code" data-index="0" disabled>Saved<\/button>/);

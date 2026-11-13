@@ -28,6 +28,12 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  ].join('\n');
  const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
+ vm.runInContext("state.page='cart';renderCart();renderRight()",context);
+ assert.match(elements.get('center').innerHTML,/class="shopping-empty-state"/);
+ assert.match(elements.get('right').innerHTML,/Your shopping list is empty/);
+ assert.match(elements.get('right').innerHTML,/S\$0\.00/);
+ assert.doesNotMatch(elements.get('right').innerHTML,/Semi-skimmed milk/);
+ vm.runInContext("state.page='assistant'",context);
  context.fixtureText=fixtureText;
  vm.runInContext("state.results=[];state.chats=[{role:'assistant',text:fixtureText}];renderRight()",context);
  assert.doesNotMatch(elements.get('right').innerHTML,/ai-response-disclosure|Show AI response/);
@@ -46,6 +52,10 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  handlers.click({target:{closest:()=>({dataset:{action:'page',id:'cart'}})}});
  for(const title of ['Australia Strawberries 250g','Australia Strawberries 250G','Strawberries 250G+'])assert.ok(elements.get('center').innerHTML.includes(title));
  assert.ok(elements.get('center').innerHTML.includes('S$16.30'));
+ const cartSummaryHtml=elements.get('right').innerHTML;
+ assert.equal((cartSummaryHtml.match(/class="shopping-summary-item"/g)||[]).length,3);
+ assert.ok(cartSummaryHtml.includes('Australia Strawberries 250g'));
+ assert.ok(!cartSummaryHtml.includes('Semi-skimmed milk'));
  context.receiptRows=Array.from({length:5},(_,index)=>({title:`Banana ${index+1} ([redmart.lazada.sg](https://redmart.lazada.sg/products/${index+1}))`,merchant:'RedMart',price:index+1,url:`https://redmart.lazada.sg/products/${index+1}`}));
  vm.runInContext('state.cart=receiptRows;renderCart()',context);
  const receipt=elements.get('center').innerHTML;
@@ -92,7 +102,7 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  assert.doesNotMatch(elements.get('center').innerHTML,/What would you like help with\?|Product research/);
  assert.doesNotMatch(elements.get('center').innerHTML,/Get recipes/);
  assert.doesNotMatch(elements.get('center').innerHTML,/<small><\/small>/);
- assert.match(elements.get('center').innerHTML,/<strong>General<\/strong><\/span>/);
+ assert.match(elements.get('center').innerHTML,/<strong>General<\/strong><small>Anything else<\/small><\/span>/);
  elements.get('note-title').value='Weekly groceries';
  elements.get('note-text').value='this week cooking\n- pork: 200g\n- broccoli: 200g\n- milk: 500ml';
  handlers.submit({target:{id:'note-form'},preventDefault(){}});

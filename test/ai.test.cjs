@@ -181,8 +181,8 @@ test('answers promo-code searches naturally with web citations',async()=>{
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! I found a FairPrice promotion. Use **FP10** for 10% off selected items, subject to the terms on the [FairPrice promotion page](https://www.fairprice.com.sg/promotions). The page does not confirm whether this code is currently valid.',[source])};
  });
- assert.equal(payload.tool_choice,'auto');
- assert.equal(payload.tools[0].search_context_size,'medium');
+ assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tools[0].search_context_size,'high');
  assert.equal(payload.max_output_tokens,10000);
  assert.equal(payload.input.at(-1).content,'Find current promo codes for FairPrice.');
  assert.match(payload.instructions,/Answer with a helpful introduction and one Markdown bullet per verified result, not JSON or a product table/);
