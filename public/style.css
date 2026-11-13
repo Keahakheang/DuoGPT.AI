@@ -1069,16 +1069,85 @@ html[data-theme="dark"] .page-body::after { opacity:.45 }
     .landing-send { min-width:68px;height:43px!important;padding:0 8px;font-size:12px!important }
 }
 
+@media(min-width:1451px) and (max-width:1600px) {
+    body.assistant-landing .main { padding:42px 35px 40px 37px }
+    body.assistant-landing .topbar { margin-bottom:42px }
+    body.assistant-landing .assistant-hero {
+        min-height:325px;
+        grid-template-columns:minmax(180px,220px) minmax(0,1fr);
+        gap:18px;
+        padding:28px;
+        border-radius:34px;
+    }
+    body.assistant-landing .assistant-mascot { width:180px }
+    body.assistant-landing .assistant-speech { padding:24px 28px;border-radius:28px }
+    body.assistant-landing .assistant-speech h2 { font-size:clamp(22px,1.8vw,30px) }
+    body.assistant-landing .assistant-speech p { font-size:16px }
+    body.assistant-landing .assistant-landing-panel { gap:20px;padding:30px 34px;border-radius:34px }
+    body.assistant-landing .landing-input { min-height:76px }
+    body.assistant-landing .landing-send { min-width:136px;height:56px!important }
+    body.assistant-landing .starter-prompt { min-height:48px;padding:10px 16px }
+}
+
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary {
+    padding:19px;
+    border:2px solid #ffe58a;
+    border-radius:28px;
+    background:linear-gradient(145deg,#fff8d9,#fff1bc);
+    box-shadow:0 5px 0 rgba(38,55,75,.12);
+}
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-heading { display:flex;align-items:center;gap:10px;margin-bottom:14px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-icon {
+    display:grid;
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
+    place-items:center;
+    border:2px solid var(--ink);
+    border-radius:12px;
+    background:#b9efd6;
+    color:#27865f;
+}
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-icon svg { width:20px;height:20px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-heading h3 { flex:1;margin:0;color:var(--ink);font:600 17px "Fredoka",sans-serif }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .summary-star { color:#ffe58a;font-size:20px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-items { display:grid;min-height:96px;gap:9px;margin:0;padding:0;list-style:none }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-item { display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:8px;color:#42566a;font-size:12px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-name { overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-item strong { color:var(--ink);font-size:12px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-dot { width:10px;height:10px;border:1px solid #26374b33;border-radius:50%;background:#ffb6c9 }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-item:nth-child(2) .shopping-summary-dot { background:#ffe58a }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-item:nth-child(3) .shopping-summary-dot { background:#8cdef8 }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-item:nth-child(4) .shopping-summary-dot { background:#d8c5ff }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-empty,
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-more { grid-column:1/-1;color:#718096;font-size:12px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-total { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:13px;border-top:1px dashed #f3cb5c;color:#718096;font-size:13px }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-total strong { color:var(--ink);font:600 22px "Fredoka",sans-serif }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-note { margin:8px 0 12px;color:#718096;font-size:10px;line-height:1.45 }
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-view {
+    display:flex;
+    width:100%;
+    min-height:46px;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:2px solid var(--ink);
+    border-radius:999px;
+    background:linear-gradient(110deg,#36b9ea,#67cbed);
+    box-shadow:0 4px 0 var(--ink);
+    color:#fff;
+    font-size:13px;
+    font-weight:850;
+}
+body:is(.saved-notes-page,.shopping-list-page,.promo-codes-page) .shopping-summary-view:hover { transform:translateY(-1px) }
+
 @media(min-width:1451px) {
     .app {
-        width:106.838%;
-        min-height:106.838vh;
-        transform:scale(.936);
-        transform-origin:top left;
+        width:100%;
+        min-height:100vh;
     }
-    .navigation { height:106.838vh }
-    .main { min-height:106.838vh;padding:55px 55.33px 44px 46.5px }
-    .assistant-hero { min-height:316px }
+    .navigation { height:100vh }
+    .main { min-height:100vh;padding:70px 62.33px 44px 53px }
     .assistant-landing .workspace.assistant-layout .right-column { gap:33px }
 }
 
@@ -1316,57 +1385,6 @@ body.shopping-list-page .hero-shape { background:#ffe58a }
     body.shopping-list-page .receipt-product strong { color:var(--ink);font-size:14px }
     body.shopping-list-page .receipt-price { color:#168bb8;font-size:14px }
     body.shopping-list-page .receipt-total { border-top:1px dashed #ffe58a }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary {
-        padding:19px;
-        border:2px solid #ffe58a;
-        border-radius:28px;
-        background:linear-gradient(145deg,#fff8d9,#fff1bc);
-        box-shadow:0 5px 0 rgba(38,55,75,.12);
-    }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-heading { display:flex;align-items:center;gap:10px;margin-bottom:14px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-icon {
-        display:grid;
-        width:40px;
-        height:40px;
-        flex:0 0 40px;
-        place-items:center;
-        border:2px solid var(--ink);
-        border-radius:12px;
-        background:#b9efd6;
-        color:#27865f;
-    }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-icon svg { width:20px;height:20px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-heading h3 { flex:1;margin:0;color:var(--ink);font:600 17px "Fredoka",sans-serif }
-    body:is(.saved-notes-page,.shopping-list-page) .summary-star { color:#ffe58a;font-size:20px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-items { display:grid;min-height:96px;gap:9px;margin:0;padding:0;list-style:none }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-item { display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:8px;color:#42566a;font-size:12px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-name { overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-item strong { color:var(--ink);font-size:12px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-dot { width:10px;height:10px;border:1px solid #26374b33;border-radius:50%;background:#ffb6c9 }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-item:nth-child(2) .shopping-summary-dot { background:#ffe58a }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-item:nth-child(3) .shopping-summary-dot { background:#8cdef8 }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-item:nth-child(4) .shopping-summary-dot { background:#d8c5ff }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-empty,
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-more { grid-column:1/-1;color:#718096;font-size:12px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-total { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:13px;border-top:1px dashed #f3cb5c;color:#718096;font-size:13px }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-total strong { color:var(--ink);font:600 22px "Fredoka",sans-serif }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-note { margin:8px 0 12px;color:#718096;font-size:10px;line-height:1.45 }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-view {
-        display:flex;
-        width:100%;
-        min-height:46px;
-        align-items:center;
-        justify-content:center;
-        gap:8px;
-        border:2px solid var(--ink);
-        border-radius:999px;
-        background:linear-gradient(110deg,#36b9ea,#67cbed);
-        box-shadow:0 4px 0 var(--ink);
-        color:#fff;
-        font-size:13px;
-        font-weight:850;
-    }
-    body:is(.saved-notes-page,.shopping-list-page) .shopping-summary-view:hover { transform:translateY(-1px) }
     body:is(.saved-notes-page,.shopping-list-page) .assistant-panel.conversation-panel {
         min-height:0;
         border:2px solid #8cdef8;
@@ -1393,12 +1411,7 @@ body.shopping-list-page .hero-shape { background:#ffe58a }
         height:auto;
         min-height:0;
         flex:1;
-        background-color:#fff;
-        background-image:radial-gradient(#d9d4f5 1px,transparent 1px);
-        background-size:16px 16px;
     }
-    body.shopping-list-page .chat-bubble,
-    body.saved-notes-page .chat-bubble { border:1px solid #d5b9ff;border-radius:18px 18px 18px 4px;background:#eee3ff;color:#42566a;font-size:12px }
     body.shopping-list-page .quick-actions,
     body.saved-notes-page .quick-actions { padding:5px 12px 10px }
     body.shopping-list-page .quick-actions button,
@@ -1697,4 +1710,79 @@ body.promo-codes-page .saved-promo .promo-answer-body { border-color:#f2e8ff;bac
     body.promo-codes-page .saved-promo-section-heading .tiny-pill { padding:6px 8px;font-size:10px }
     body.promo-codes-page .saved-promo-empty { min-height:250px;padding:18px 12px }
     body.promo-codes-page .promo-ticket-illustration { width:145px;height:98px }
+}
+
+.assistant-panel .chat-box {
+    background-color:#fff;
+    background-image:radial-gradient(#d9d4f5 1px,transparent 1px);
+    background-size:16px 16px;
+}
+.assistant-panel .chat-line:not(.user):not(.error) .chat-bubble {
+    border:1px solid #d5b9ff;
+    border-radius:18px 18px 18px 4px;
+    background:#eee3ff;
+    color:#42566a;
+    font-size:12px;
+}
+
+html[data-theme="dark"] .assistant-panel .chat-box {
+    background-color:#202c3c;
+    background-image:radial-gradient(rgba(183,155,255,.24) 1px,transparent 1px);
+}
+html[data-theme="dark"] .assistant-panel .chat-line:not(.user):not(.error) .chat-bubble {
+    border-color:#6d5f86;
+    background:#3a344e;
+    color:#edf5ff;
+}
+
+.assistant-panel.conversation-panel {
+    border:2px solid #8cdef8;
+    border-radius:28px;
+    box-shadow:0 5px 0 rgba(38,55,75,.1);
+}
+.assistant-panel .chat-head {
+    min-height:70px;
+    padding:10px 12px;
+    border-bottom:2px dashed #8cdef8;
+    background:linear-gradient(110deg,#a8e4ff,#d8c5ff);
+}
+.assistant-panel .chat-head .bot-icon { border:2px solid var(--ink);background:#fff;color:#36a9d2 }
+.assistant-panel .chat-head .chat-title { color:var(--ink);font:600 14px "Fredoka",sans-serif }
+.assistant-panel .chat-head .chat-sub { color:#60748a }
+html[data-theme="dark"] .assistant-panel .chat-head .chat-sub { color:#c5d6e8 }
+
+body.shopping-list-page .shopping-list-items {
+    display:grid;
+    gap:12px;
+    margin:0;
+    padding:0;
+    border:0;
+}
+body.shopping-list-page .shopping-list-items .receipt-item {
+    padding:15px 16px;
+    border:1px solid #c5eaf7;
+    border-radius:16px;
+    background:#f3fbff;
+    box-shadow:0 3px 0 rgba(38,55,75,.06);
+}
+body.shopping-list-page .shopping-list-items .receipt-item:last-child { border-bottom:1px solid #c5eaf7 }
+
+body.saved-notes-page .personal-note {
+    padding:18px 20px 18px 54px;
+    border-color:#b9e8f7;
+    border-radius:22px;
+    background-color:#fff;
+    background-image:
+        linear-gradient(90deg,transparent 35px,#ffb6c9 35px,#ffb6c9 37px,transparent 37px),
+        repeating-linear-gradient(to bottom,#fff 0 29px,#c5edff 29px 30px);
+}
+@media(max-width:540px) {
+    body.saved-notes-page .personal-note { padding-left:48px }
+}
+html[data-theme="dark"] body.saved-notes-page .personal-note {
+    border-color:#3a4b60;
+    background-color:#202b25;
+    background-image:
+        linear-gradient(90deg,transparent 35px,#9e7184 35px,#9e7184 37px,transparent 37px),
+        repeating-linear-gradient(to bottom,#202b25 0 29px,#35454e 29px 30px);
 }
