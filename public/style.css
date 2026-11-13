@@ -1069,7 +1069,7 @@ html[data-theme="dark"] .page-body::after { opacity:.45 }
     .landing-send { min-width:68px;height:43px!important;padding:0 8px;font-size:12px!important }
 }
 
-@media(min-width:951px) {
+@media(min-width:1451px) {
     .app {
         width:106.838%;
         min-height:106.838vh;
@@ -1077,13 +1077,9 @@ html[data-theme="dark"] .page-body::after { opacity:.45 }
         transform-origin:top left;
     }
     .navigation { height:106.838vh }
-    .main { min-height:106.838vh }
-}
-
-@media(min-width:1301px) and (max-width:1450px) {
-    .main { padding:66px 55.33px 44px 46.5px }
-    .assistant-hero { min-height:333px }
-    .assistant-landing .workspace.assistant-layout .right-column { gap:28px }
+    .main { min-height:106.838vh;padding:55px 55.33px 44px 46.5px }
+    .assistant-hero { min-height:316px }
+    .assistant-landing .workspace.assistant-layout .right-column { gap:33px }
 }
 
 body.saved-notes-page .hero {
