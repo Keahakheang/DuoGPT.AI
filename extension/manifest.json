@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Shopwise — Shopping Assistant",
+  "name": "BudgetBuddy — Shopping Assistant",
   "version": "1.0.0",
-  "description": "Search shopping listings, ask Shopwise, and save promo codes in your browser side panel.",
+  "description": "Search shopping listings, ask BudgetBuddy, and save promo codes in your browser side panel.",
   "minimum_chrome_version": "116",
   "permissions": [
     "sidePanel",
@@ -17,7 +17,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open Shopwise"
+    "default_title": "Open BudgetBuddy"
   },
   "side_panel": {
     "default_path": "app/index.html"

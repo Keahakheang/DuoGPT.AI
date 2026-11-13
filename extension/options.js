@@ -32,12 +32,12 @@ form.addEventListener('submit',async event=>{
   try{
     const granted=await chrome.permissions.request({origins:[originPattern]});
     if(!granted){
-      status.textContent='Site access was not granted, so Shopwise cannot connect to this server.';
+      status.textContent='Site access was not granted, so BudgetBuddy cannot connect to this server.';
       status.classList.add('error');
       return;
     }
     await chrome.storage.local.set({[API_URL_KEY]:url.origin});
-    status.textContent='Connected. Open the Shopwise side panel to start using it.';
+    status.textContent='Connected. Open the BudgetBuddy side panel to start using it.';
   }catch(error){
     status.textContent=`Could not save settings: ${error.message||'extension permission request failed.'}`;
     status.classList.add('error');

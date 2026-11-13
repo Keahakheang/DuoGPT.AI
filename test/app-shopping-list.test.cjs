@@ -118,10 +118,10 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  assert.equal(chatRequests[0].context.savedNoteRequest,true);
  assert.equal(chatRequests[0].context.savedNoteCategory,'grocery-finding');
  assert.ok(elements.get('center').innerHTML.includes('Here is a sourced result:'));
- assert.match(elements.get('center').innerHTML,/<details class="ai-response-disclosure saved-note-answer"[^>]*><summary>Shopwise response<\/summary>/);
+ assert.match(elements.get('center').innerHTML,/<details class="ai-response-disclosure saved-note-answer"[^>]*><summary>BudgetBuddy response<\/summary>/);
  assert.doesNotMatch(elements.get('center').innerHTML,/<details class="ai-response-disclosure saved-note-answer"[^>]* open/);
  assert.ok(!elements.get('right').innerHTML.includes('Here is a sourced result:'));
- assert.ok(elements.get('center').innerHTML.indexOf(noteText)<elements.get('center').innerHTML.indexOf('Shopwise response'));
+ assert.ok(elements.get('center').innerHTML.indexOf(noteText)<elements.get('center').innerHTML.indexOf('BudgetBuddy response'));
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes[0].answer,noteReply);
  assert.match(elements.get('center').innerHTML,/class="chat-list-button" data-action="saved-note-cart-add"/);
  assert.ok(elements.get('center').innerHTML.includes('+ Add to shopping list</button>'));

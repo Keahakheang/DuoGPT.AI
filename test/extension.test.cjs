@@ -20,10 +20,11 @@ test('Extension CORS allows only Chrome extension origins and required API heade
  assert.deepEqual(extensionCorsHeaders('https://example.com'),{Vary:'Origin'});
 });
 
-test('Extension manifest opens the Shopwise app in a side panel with optional server access',()=>{
+test('Extension manifest opens the BudgetBuddy app in a side panel with optional server access',()=>{
  const root=path.resolve(__dirname,'..');
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'extension','manifest.json'),'utf8'));
  assert.equal(manifest.manifest_version,3);
+ assert.match(manifest.name,/BudgetBuddy/);
  assert.equal(manifest.side_panel.default_path,'app/index.html');
  assert.ok(manifest.permissions.includes('sidePanel'));
  assert.ok(manifest.permissions.includes('storage'));

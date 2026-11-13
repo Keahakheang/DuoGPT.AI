@@ -14,4 +14,4 @@ await cp(path.join(projectDir,'public','style.css'),path.join(outputDir,'app','s
 for(const file of ['manifest.json','background.js','options.html','options.css','options.js']){
   await cp(path.join(extensionDir,file),path.join(outputDir,file));
 }
-console.log(`Built the Shopwise extension at ${outputDir}`);
+console.log(`Built the BudgetBuddy extension at ${outputDir}`);

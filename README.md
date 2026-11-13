@@ -1,6 +1,6 @@
-# Shopwise — AI web search shopping assistant
+# BudgetBuddy — AI web search shopping assistant
 
-Shopwise uses an OpenAI-compatible provider's **Responses API web search tool** for live product searches and AI answers. The provider and selected model must have web search enabled. Product titles and listed prices are extracted from cited web results; coverage and price accuracy vary, and users should verify the exact item and final checkout total with the retailer. Shopwise does not connect to retailer accounts or add items to retailer carts.
+BudgetBuddy uses an OpenAI-compatible provider's **Responses API web search tool** for live product searches and AI answers. The provider and selected model must have web search enabled. Product titles and listed prices are extracted from cited web results; coverage and price accuracy vary, and users should verify the exact item and final checkout total with the retailer. BudgetBuddy does not connect to retailer accounts or add items to retailer carts.
 
 Saved notes and the shopping list stay in the local browser. Notes can be marked **General**, **Groceries shopping** (find and compare products you want to buy), or **Recipe ingredients** (for a dish you already chose, get serving-sized ingredients and sourced Singapore shopping options). Grocery shopping and recipe ingredient requests require live web search. Grocery answers cover every requested item in order, and mark items unavailable rather than silently skipping or guessing; recipe requests include the full serving-sized ingredient list. If a budget is included, the assistant compares listed pack prices against it without leaving out essential ingredients. **Get AI help with this note** sends the complete note to the assistant; its response appears below the saved note and is stored with that note on this device.
 
@@ -35,12 +35,12 @@ Open http://localhost:3000. Run `npm test` for the test suite.
 
 ## Chrome and Edge side-panel extension
 
-The extension reuses the Shopwise frontend and your deployed API. Build it with `npm run build:extension`; the unpacked extension files are written to `extension/dist`.
+The extension reuses the BudgetBuddy frontend and your deployed API. Build it with `npm run build:extension`; the unpacked extension files are written to `extension/dist`.
 
 1. Open `chrome://extensions` in Chrome or `edge://extensions` in Edge, then enable **Developer mode**.
 2. Choose **Load unpacked** and select the `extension/dist` folder.
-3. Open the Shopwise extension settings and enter your deployed Shopwise website's HTTPS origin, then approve access to that site.
-4. Click the extension icon to open Shopwise in the browser side panel.
+3. Open the BudgetBuddy extension settings and enter your deployed BudgetBuddy website's HTTPS origin, then approve access to that site.
+4. Click the extension icon to open BudgetBuddy in the browser side panel.
 
 For local development, run `npm start` and use `http://localhost:3000` as the server URL. The extension stores its notes and saved promo codes in extension-local browser storage, separately from the website. Extension API access is limited to the configured site; CORS responses allow only Chrome extension origins. AI provider credentials remain server-side.
 

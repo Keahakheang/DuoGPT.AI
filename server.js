@@ -28,4 +28,4 @@ async function route(req,res){const u=new URL(req.url,'http://localhost');
  }
  return send(res,404,{error:'Not found'});
 }
-http.createServer((req,res)=>route(req,res).catch(()=>send(res,500,{error:'Server error'}))).listen(PORT,()=>console.log(`Shopwise on http://localhost:${PORT}`));
+http.createServer((req,res)=>route(req,res).catch(()=>send(res,500,{error:'Server error'}))).listen(PORT,()=>console.log(`BudgetBuddy on http://localhost:${PORT}`));

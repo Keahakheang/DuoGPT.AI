@@ -1,8 +1,8 @@
 {
-  "name": "shopwise-live-shopping",
+  "name": "budgetbuddy-live-shopping",
   "version": "4.0.0",
   "private": true,
-  "description": "Shopwise shopping search and assistant using AI web search",
+  "description": "BudgetBuddy shopping search and assistant using AI web search",
   "scripts": {
     "start": "node server.js",
     "build:extension": "node extension/build.mjs",
