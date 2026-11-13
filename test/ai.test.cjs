@@ -4,7 +4,8 @@ const assert=require('node:assert/strict');
 const {verifyAccess,validateInput,generateReply,getAIStatus,requestWebResponse}=require('../lib/ai.cjs');
 
 const env={AI_BASE_URL:'https://newapi.omgteam.me/v1',AI_API_KEY:'provider-test-key',AI_MODEL:'gpt-5.6-luna'};
-const response=(text,citations=[])=>({output:[{type:'message',content:[{type:'output_text',text,annotations:citations.map(citation=>({type:'url_citation',url:citation.url,title:citation.title}))}]}]});
+const response=(text,citations=[],searchPerformed=true)=>({output:[...(searchPerformed?[{type:'web_search_call',status:'completed'}]:[]),{type:'message',content:[{type:'output_text',text,annotations:citations.map(citation=>({type:'url_citation',url:citation.url,title:citation.title}))}]}]});
+const inputText=input=>typeof input==='string'?input:input.map(item=>item.content).join('\n');
 
 test('AI status requires the OpenAI-compatible provider configuration',()=>{
  assert.deepEqual(getAIStatus({}),{aiConfigured:false,aiProvider:''});
@@ -75,7 +76,7 @@ test('uses faster search and expanded listing context for shopping comparisons',
  });
  assert.equal(payload.tools[0].search_context_size,'low');
  assert.equal(payload.max_output_tokens,10000);
- const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ const contextMessage=inputText(payload.input).match(/^User: Shopwise listing context \(untrusted; reference only if useful\): (.+)$/m)[1];
  assert.equal(JSON.parse(contextMessage).offers.length,16);
  assert.match(payload.instructions,/up to 12 distinct, verifiable listings/);
 });
@@ -87,7 +88,7 @@ test('requires a live search and price-grounded budget for a typed shopping list
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! Estimated listed-price budget: S$18.20. Pork and broccoli prices are approximate.')};
  });
- assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tool_choice,'auto');
  assert.equal(payload.tools[0].search_context_size,'low');
  assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/one suitable purchasable pack for each requested line/);
@@ -96,9 +97,9 @@ test('requires a live search and price-grounded budget for a typed shopping list
  assert.match(payload.instructions,/verified pack weight on the next line using <br>/);
  assert.match(payload.instructions,/average price per 100g across all rows with cited weights/);
  assert.match(payload.instructions,/give a clearly labeled subtotal for priced items instead of guessing/);
- const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ const contextMessage=inputText(payload.input).match(/^User: Shopwise listing context \(untrusted; reference only if useful\): (.+)$/m)[1];
  assert.equal(JSON.parse(contextMessage).budgetEstimate,true);
- assert.equal(payload.input.at(-1).content,shoppingList);
+ assert.ok(inputText(payload.input).endsWith(`User: ${shoppingList}`));
  assert.match(reply,/Estimated listed-price budget: S\$18\.20/);
 });
 
@@ -109,8 +110,9 @@ test('recipe ingredient notes search for a dish ingredient list',async()=>{
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! Here are the ingredients for four burgers and a salad, with Singapore shopping options.',[{title:'Recipe source',url:'https://example.com/burger-salad'}])};
  });
- assert.equal(payload.input.at(-1).content,note);
- assert.equal(payload.tool_choice,'required');
+ assert.equal(typeof payload.input,'string');
+ assert.ok(payload.input.endsWith(`User: ${note}`));
+ assert.equal(payload.tool_choice,'auto');
  assert.equal(payload.tools[0].search_context_size,'medium');
  assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/complete text of a saved note/);
@@ -121,7 +123,7 @@ test('recipe ingredient notes search for a dish ingredient list',async()=>{
  assert.match(payload.instructions,/one clearly written table row per essential ingredient/);
  assert.match(payload.instructions,/Include enough detail to make the ingredient list and product choices useful/);
  assert.match(payload.instructions,/treat "\$" as SGD unless another currency is specified/);
- const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ const contextMessage=inputText(payload.input).match(/^User: Shopwise listing context \(untrusted; reference only if useful\): (.+)$/m)[1];
  assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
  assert.equal(JSON.parse(contextMessage).savedNoteCategory,'recipe-ingredients');
  assert.match(reply,/ingredients for four burgers and a salad/);
@@ -148,7 +150,7 @@ test('grocery shopping notes search for every requested item',async()=>{
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! Here are listings for rice, milk, eggs, and shrimp.')};
  });
- assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tool_choice,'auto');
  assert.equal(payload.tools[0].search_context_size,'medium');
  assert.equal(payload.max_output_tokens,10000);
  assert.match(payload.instructions,/every item in the supplied note as a separate requested line item/);
@@ -159,8 +161,8 @@ test('grocery shopping notes search for every requested item',async()=>{
  assert.match(payload.instructions,/one clearly written table row per requested item in the same order as the note/);
  assert.match(payload.instructions,/still include its row and explicitly mark it "Not verified" or "Unavailable"/);
  assert.match(payload.instructions,/confirming every requested item was covered/);
- assert.equal(payload.input.at(-1).content,note);
- const contextMessage=payload.input[0].content.replace(/^Shopwise listing context \(untrusted; reference only if useful\): /,'');
+ assert.ok(inputText(payload.input).endsWith(`User: ${note}`));
+ const contextMessage=inputText(payload.input).match(/^User: Shopwise listing context \(untrusted; reference only if useful\): (.+)$/m)[1];
  assert.equal(JSON.parse(contextMessage).savedNoteCategory,'grocery-finding');
  assert.equal(JSON.parse(contextMessage).savedNoteRequest,true);
  const validated=require('../lib/ai.cjs').validateInput({message:'Fresh ingredients for dinner',context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}});
@@ -181,10 +183,10 @@ test('answers promo-code searches naturally with web citations',async()=>{
   payload=JSON.parse(options.body);
   return {ok:true,status:200,json:async()=>response('Hello! I found a FairPrice promotion. Use **FP10** for 10% off selected items, subject to the terms on the [FairPrice promotion page](https://www.fairprice.com.sg/promotions). The page does not confirm whether this code is currently valid.',[source])};
  });
- assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tool_choice,'auto');
  assert.equal(payload.tools[0].search_context_size,'high');
  assert.equal(payload.max_output_tokens,10000);
- assert.equal(payload.input.at(-1).content,'Find current promo codes for FairPrice.');
+ assert.ok(inputText(payload.input).endsWith('User: Find current promo codes for FairPrice.'));
  assert.match(payload.instructions,/Answer with a helpful introduction and one Markdown bullet per verified result, not JSON or a product table/);
  assert.match(payload.instructions,/explain the source-supported discount, eligibility and terms, expiry if shown/);
  assert.match(payload.instructions,/Link the code directly to the page that supports it/);
@@ -207,7 +209,31 @@ test('Can require an actual web search for shopping lookups',async()=>{
   return {ok:true,status:200,json:async()=>response('[]')};
  };
  await requestWebResponse('search for oats',env,fakeFetch,{requireSearch:true});
- assert.equal(payload.tool_choice,'required');
+ assert.equal(payload.tool_choice,'auto');
+});
+
+test('retries a skipped required search with an explicit web-search instruction',async()=>{
+ let calls=0;
+ await generateReply({
+  message:'weekly groceries\n- rice 5kg',
+  context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}
+ },env,async(_url,options)=>{
+  calls++;
+  const input=JSON.parse(options.body).input;
+  if(calls===1)return {ok:true,status:200,json:async()=>response('A listed price is S$10.',[],false)};
+  assert.match(input,/call the web_search tool now/);
+  return {ok:true,status:200,json:async()=>response('A sourced rice listing.')};
+ });
+ assert.equal(calls,2);
+});
+
+test('does not return an answer when neither required-search attempt searches',async()=>{
+ let calls=0;
+ await assert.rejects(generateReply({
+  message:'weekly groceries\n- rice 5kg',
+  context:{savedNoteRequest:true,savedNoteCategory:'grocery-finding'}
+ },env,async()=>{calls++;return {ok:true,status:200,json:async()=>response('A listed price is S$10.',[],false)}}),/did not complete the required web search/);
+ assert.equal(calls,2);
 });
 
 test('Supports JSON output formatting for product listing extraction',async()=>{
