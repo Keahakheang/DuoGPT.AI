@@ -160,4 +160,19 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  handlers.click({target:{closest:()=>({dataset:{action:'note-remove',id:noteId}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).notes.length,0);
  assert.ok(!elements.get('center').innerHTML.includes('this week cooking'));
+ context.sameRetailerFixture=[
+  '| Product | Retailer | Listed price | Shopping list |',
+  '| --- | --- | ---: | --- |',
+  '| Apples | Cold Storage | S$2.00 | + Add to shopping list |',
+  '| Bread | Cold Storage | S$3.00 | + Add to shopping list |'
+ ].join('\n');
+ vm.runInContext('state.cart=[];state.results=[];state.page="assistant";state.chats=[{role:"assistant",text:sameRetailerFixture}];renderRight()',context);
+ handlers.click({target:{closest:()=>({dataset:{action:'chat-cart-add',index:'0'}})}});
+ assert.equal(vm.runInContext('state.cart.length',context),1);
+ assert.equal(vm.runInContext('state.cart[0].title',context),'Apples');
+ assert.match(elements.get('right').innerHTML,/data-index="0" disabled>&#10003; Added/);
+ assert.match(elements.get('right').innerHTML,/data-index="1"\s*>\+ Add to shopping list/);
+ handlers.click({target:{closest:()=>({dataset:{action:'chat-cart-add',index:'1'}})}});
+ assert.equal(vm.runInContext('state.cart.length',context),2);
+ assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(state.cart.map(item=>item.title))',context)),['Apples','Bread']);
 });
