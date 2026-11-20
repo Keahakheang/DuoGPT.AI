@@ -32,6 +32,9 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  assert.match(elements.get('center').innerHTML,/class="shopping-empty-state"/);
  assert.match(elements.get('right').innerHTML,/Your shopping list is empty/);
  assert.match(elements.get('right').innerHTML,/S\$0\.00/);
+ assert.doesNotMatch(elements.get('right').innerHTML,/Never share passwords or payment details/);
+ vm.runInContext('state.aiConfigured=true;renderRight()',context);
+ assert.ok(elements.get('right').innerHTML.includes('BudgetBuddy assistant can make mistakes. Please double-check important info.'));
  assert.doesNotMatch(elements.get('right').innerHTML,/Semi-skimmed milk/);
  vm.runInContext("state.page='assistant'",context);
  context.fixtureText=fixtureText;
@@ -52,10 +55,17 @@ test('shopping list buttons and saved-note AI responses stay with their note',as
  handlers.click({target:{closest:()=>({dataset:{action:'page',id:'cart'}})}});
  for(const title of ['Australia Strawberries 250g','Australia Strawberries 250G','Strawberries 250G+'])assert.ok(elements.get('center').innerHTML.includes(title));
  assert.ok(elements.get('center').innerHTML.includes('S$16.30'));
+ vm.runInContext("state.cart[0].title='FairPrice Onwards Toilet Tissue Roll 3 Ply Super Saver Long Pack';renderRight()",context);
  const cartSummaryHtml=elements.get('right').innerHTML;
  assert.equal((cartSummaryHtml.match(/class="shopping-summary-item"/g)||[]).length,3);
  assert.ok(cartSummaryHtml.includes('Australia Strawberries 250g'));
+ assert.match(cartSummaryHtml,/FairPrice Onwards Toilet Tissue Roll 3 Ply Super Saver Long Pack<\/span><strong>S\$4\.95<\/strong>/);
+ assert.doesNotMatch(cartSummaryHtml,/Listed prices only; your final checkout may differ/);
  assert.ok(!cartSummaryHtml.includes('Semi-skimmed milk'));
+ context.duplicateAddProduct={id:'duplicate-add',title:'Repeat click product',merchant:'FairPrice',price:2,url:'https://www.fairprice.com.sg/product/repeat-click',observedAt:new Date().toISOString()};
+ vm.runInContext('state.results=[duplicateAddProduct]',context);
+ for(let index=0;index<2;index++)handlers.click({target:{closest:()=>({dataset:{action:'cart-add',id:'duplicate-add'}})}});
+ assert.equal(vm.runInContext('state.cart.filter(item=>item.url===duplicateAddProduct.url).length',context),1);
  context.receiptRows=Array.from({length:5},(_,index)=>({title:`Banana ${index+1} ([redmart.lazada.sg](https://redmart.lazada.sg/products/${index+1}))`,merchant:'RedMart',price:index+1,url:`https://redmart.lazada.sg/products/${index+1}`}));
  vm.runInContext('state.cart=receiptRows;renderCart()',context);
  const receipt=elements.get('center').innerHTML;
