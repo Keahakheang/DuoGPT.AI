@@ -184,7 +184,7 @@ test('answers promo-code searches naturally with web citations',async()=>{
   return {ok:true,status:200,json:async()=>response('Hello! I found a FairPrice promotion. Use **FP10** for 10% off selected items, subject to the terms on the [FairPrice promotion page](https://www.fairprice.com.sg/promotions). The page does not confirm whether this code is currently valid.',[source])};
  });
  assert.equal(payload.tool_choice,'auto');
- assert.equal(payload.tools[0].search_context_size,'high');
+ assert.equal(payload.tools[0].search_context_size,'medium');
  assert.equal(payload.max_output_tokens,10000);
  assert.ok(inputText(payload.input).endsWith('User: Find current promo codes for FairPrice.'));
  assert.match(payload.instructions,/Answer with a helpful introduction and one Markdown bullet per verified result, not JSON or a product table/);
@@ -200,6 +200,18 @@ test('answers promo-code searches naturally with web citations',async()=>{
 
  const noSources=await generateReply({message:'Find codes for FairPrice',context:{promoCodeSearch:true}},env,async()=>({ok:true,status:200,json:async()=>response('The official promotions page has no published voucher code.')}));
  assert.match(noSources,/No promo codes could be verified from accessible web sources/);
+});
+
+test('does not retry a timed-out promo search beyond the UI timeout window',async()=>{
+ let calls=0;
+ await assert.rejects(generateReply({
+  message:'Find current promo codes for Grab.',
+  context:{promoCodeSearch:true}
+ },env,async()=>{
+  calls++;
+  throw Object.assign(new Error('timeout'),{name:'TimeoutError'});
+ }),/required AI web search took too long/);
+ assert.equal(calls,1);
 });
 
 test('Can require an actual web search for shopping lookups',async()=>{

@@ -18,7 +18,7 @@ Keys are sent only from the server. Never put them in browser code or commit the
 
 Check `/api/status` for `shoppingConfigured:true`, then search a product. The status endpoint confirms only that required settings are present; it does not verify the provider's key, model, or web-search access. If the provider rejects the Responses API or `web_search` tool, check its documentation and model permissions.
 
-AI chat web searches can take up to two minutes before timing out. Saved-note requests use the same AI and web-search path as ordinary chat, but their responses are kept with the saved note instead of being added to the conversation.
+AI chat, saved-note, and promo-code web searches can take up to two minutes before timing out. Promo-code searches use a bounded search request so the page does not keep waiting after its request has expired. Saved-note responses are kept with the saved note instead of being added to the conversation.
 
 ## Local development
 
