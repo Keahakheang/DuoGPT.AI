@@ -17,6 +17,8 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  const document={body:{classList:{toggle(){}}},getElementById,addEventListener:(name,handler)=>handlers[name]=handler};
  let request;
  let headphoneSearches=0;
+ const timeoutValues=[];
+ const abortSignal={timeout:milliseconds=>{timeoutValues.push(milliseconds);return AbortSignal.timeout(milliseconds)}};
  const fetch=async(url,options)=>{
   if(url==='/api/status')return {ok:true,json:async()=>({aiConfigured:true,aiProvider:'Test provider'})};
   request=JSON.parse(options.body);
@@ -25,7 +27,7 @@ test('Promo codes page searches online and displays the cited AI answer',async()
   else codes=['Hello! Current Singapore-relevant codes found:','- **Sony Singapore — `SONY10`** — 10% off selected products; Not confirmed by source. [View source](https://sony.example/promotions)','- **Another store — `SAVE20`** — S$20 off. [View source](https://another.example/promotions)','','Sources:','- [Sony Singapore promotions](https://sony.example/promotions)'];
   return {ok:true,json:async()=>({reply:codes.join('\n')})};
  };
- const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal,URL});
+ const context=vm.createContext({document,localStorage:storage,sessionStorage:storage,fetch,setTimeout:()=>1,clearTimeout(){},AbortSignal:abortSignal,URL});
  vm.runInContext(fs.readFileSync(require.resolve('../public/app.js'),'utf8'),context);
  vm.runInContext("state.page='promos';render()",context);
  const nav=getElementById('navigation').innerHTML;
@@ -77,6 +79,7 @@ test('Promo codes page searches online and displays the cited AI answer',async()
  assert.match(getElementById('center').innerHTML,/data-index="0" disabled>Saved<\/button>/);
  handlers.click({target:{closest:()=>({dataset:{action:'promo-save-code',index:'0'}})}});
  assert.equal(JSON.parse(stored['shopwise-live-v1']).savedPromos.length,2);
+ assert.deepEqual(timeoutValues,[330000,330000,330000]);
 });
 
 test('Promo answer renderer separates inline retailer-code entries into list items',()=>{

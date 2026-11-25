@@ -202,7 +202,7 @@ test('answers promo-code searches naturally with web citations',async()=>{
  assert.match(noSources,/No promo codes could be verified from accessible web sources/);
 });
 
-test('does not retry a timed-out promo search beyond the UI timeout window',async()=>{
+test('does not retry a timed-out promo search',async()=>{
  let calls=0;
  await assert.rejects(generateReply({
   message:'Find current promo codes for Grab.',
@@ -210,7 +210,7 @@ test('does not retry a timed-out promo search beyond the UI timeout window',asyn
  },env,async()=>{
   calls++;
   throw Object.assign(new Error('timeout'),{name:'TimeoutError'});
- }),/required AI web search took too long/);
+ }),/Promo-code web search took too long/);
  assert.equal(calls,1);
 });
 
